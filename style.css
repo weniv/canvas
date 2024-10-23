@@ -1,0 +1,333 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.toolbar {
+    padding: 8px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar button,
+.toolbar select {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.toolbar button:hover {
+    background: #f5f5f5;
+}
+
+.main-container {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.components-panel {
+    width: 200px;
+    background: #f5f5f5;
+    padding: 16px;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.component-btn {
+    padding: 8px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.component-btn:hover {
+    background: #f5f5f5;
+}
+
+.canvas-area {
+    flex: 1;
+    background: #fff;
+    position: relative;
+    overflow: auto;
+}
+
+.canvas {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: 
+        linear-gradient(90deg, transparent calc(100% - 1px), #f0f0f0 calc(100% - 1px)),
+        linear-gradient(0deg, transparent calc(100% - 1px), #f0f0f0 calc(100% - 1px));
+    background-size: 20px 20px;
+}
+
+.properties-panel {
+    width: 250px;
+    background: #f5f5f5;
+    padding: 16px;
+    border-left: 1px solid #ddd;
+    overflow-y: auto;
+}
+
+.element {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+    cursor: move;
+    user-select: none;
+    min-width: 50px;
+    min-height: 30px;
+}
+
+.element.selected {
+    border: 2px solid #2196f3;
+}
+
+.element.button {
+    background: #2196f3;
+    color: white;
+    text-align: center;
+}
+
+.element.input {
+    background: white;
+    border: 1px solid #ddd;
+}
+
+.element.text {
+    background: transparent;
+    border: none;
+}
+
+.resize-handle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border: 1px solid #2196f3;
+    border-radius: 50%;
+}
+
+.resize-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
+.resize-handle.n { top: -4px; left: 50%; margin-left: -4px; cursor: n-resize; }
+.resize-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
+.resize-handle.w { top: 50%; left: -4px; margin-top: -4px; cursor: w-resize; }
+.resize-handle.e { top: 50%; right: -4px; margin-top: -4px; cursor: e-resize; }
+.resize-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+.resize-handle.s { bottom: -4px; left: 50%; margin-left: -4px; cursor: s-resize; }
+.resize-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
+
+.property-group {
+    margin-bottom: 16px;
+}
+
+.property-label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.property-input {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.layers-list {
+    margin-top: 16px;
+}
+
+.layer-item {
+    padding: 8px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.layer-item.selected {
+    background: #e3f2fd;
+}
+
+h2 {
+    margin-bottom: 16px;
+}
+
+.canvas-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #e0e0e0;  /* 캔버스 외부 배경색 */
+}
+
+.canvas {
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    transition: width 0.3s, height 0.3s;
+}
+
+.layer-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+}
+
+.layer-controls button {
+    padding: 4px 8px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.layer-controls button:hover {
+    background: #f5f5f5;
+}
+
+.font-size-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.font-size-controls button {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.font-size-controls button:hover {
+    background: #f5f5f5;
+}
+
+.font-size-controls input {
+    width: 60px;
+    text-align: center;
+}
+
+.element.panel {
+    background: white;
+    border: 1px solid #ddd;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    cursor: move;
+}
+
+.panel-title {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.panel-close {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    border-radius: 50%;
+}
+
+.panel-close:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.panel-content {
+    flex: 1;
+    padding: 8px;
+    overflow: auto;
+}
+
+.element.panel.selected {
+    border: 2px solid #2196f3;
+}
+
+.color-controls {
+    display: grid;
+    gap: 8px;
+}
+
+.color-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.color-control label {
+    font-size: 12px;
+    color: #666;
+}
+
+.color-control input[type="color"] {
+    width: 40px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.snap-guide {
+    position: absolute;
+    background-color: #2196f3;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 9999;
+    animation: snapGuideAppear 1s ease-out;
+}
+
+@keyframes snapGuideAppear {
+    0% { opacity: 0; }
+    20% { opacity: 0.8; }
+    80% { opacity: 0.8; }
+    100% { opacity: 0; }
+}

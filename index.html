@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prototyping Tool</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="toolbar">
+        <button onclick="tool.undo()">↩️ Undo</button>
+        <button onclick="tool.redo()">↪️ Redo</button>
+        <button onclick="tool.save()">💾 Save</button>
+        <button onclick="tool.load()">📂 Load</button>
+        <button onclick="tool.deleteSelected()">🗑️ Delete</button>
+        <select onchange="tool.setGridSize(this.value)">
+            <option value="0">No Grid</option>
+            <option value="10">Grid 10px</option>
+            <option value="20">Grid 20px</option>
+            <option value="50">Grid 50px</option>
+        </select>
+        <select onchange="tool.setCanvasSize(this.value)">
+            <option value="desktop">Desktop (1920x1080)</option>
+            <option value="laptop">Laptop (1366x768)</option>
+            <option value="iphone12">iPhone 12 (390x844)</option>
+            <option value="galaxy">Galaxy (412x915)</option>
+            <option value="ipad">iPad (820x1180)</option>
+            <option value="custom">Custom Size</option>
+        </select>
+        <!-- <button onclick="tool.exportAsImage()">🖼️ Export Image</button> -->
+        <!-- <button onclick="tool.exportAsHTML()">📄 Export HTML</button> -->
+    </div>
+
+    <div class="main-container">
+        <div class="components-panel">
+            <h2>Components</h2>
+            <button class="component-btn" data-type="button">Button</button>
+            <button class="component-btn" data-type="input">Input</button>
+            <button class="component-btn" data-type="text">Text</button>
+            <button class="component-btn" data-type="panel">Panel</button>
+            
+            <div class="layers-list">
+                <h2>Layers</h2>
+                <div id="layers-list"></div>
+            </div>
+        </div>
+        
+        <div class="canvas-area">
+            <div id="canvas" class="canvas"></div>
+        </div>
+        
+        <div class="properties-panel">
+            <h2>Properties</h2>
+            <div id="properties"></div>
+        </div>
+    </div>
+
+    <script>
+        class PrototypingTool {
+            constructor() {
+                this.elements = [];
+                this.selectedElement = null;
+                this.draggedElement = null;
+                this.resizingElement = null;
+                this.resizeHandle = null;
+                this.offset = { x: 0, y: 0 };
+                this.gridSize = 0;
+                this.history = [];
+                this.currentHistoryIndex = -1;
+                this.maxZIndex = 1;
+                this.panelDefaultSize = {
+                    width: 200,
+                    height: 150
+                };
+
+                this.devicePresets = {
+                    'desktop': { width: 1920, height: 1080 },
+                    'laptop': { width: 1366, height: 768 },
+                    'iphone12': { width: 390, height: 844 },
+                    'galaxy': { width: 412, height: 915 },
+                    'ipad': { width: 820, height: 1180 },
+                    'custom': { width: null, height: null }
+                };
+                this.currentDevice = 'desktop';
+                this.snapThreshold = 5; // 스냅이 작동할 거리 (픽셀)
+                this.snapEnabled = true; // 스냅 기능 활성화 여부
+                
+                this.initializeEvents();
+                this.saveHistory();
+            }
+
+            initializeEvents() {
+                // 컴포넌트 버튼 이벤트
+                document.querySelectorAll('.component-btn').forEach(btn => {
+                    btn.addEventListener('click', () => this.addElement(btn.dataset.type));
+                });
+
+                // 캔버스 이벤트
+                const canvas = document.getElementById('canvas');
+                canvas.addEventListener('click', (e) => {
+                    if (e.target === canvas) this.clearSelection();
+                });
+
+                // 키보드 단축키
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Delete' && this.selectedElement) {
+                        this.deleteSelected();
+                    }
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+                        e.preventDefault();
+                        this.undo();
+                    }
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+                        e.preventDefault();
+                        this.redo();
+                    }
+                });
+            }
+
+            // 캔버스 경계선에만 스냅하도록 단순화된 계산
+            calculateSnap(x, y, width, height) {
+                const canvas = document.getElementById('canvas');
+                const canvasRect = canvas.getBoundingClientRect();
+                
+                let snappedX = x;
+                let snappedY = y;
+                const guides = [];
+
+                // 왼쪽 경계
+                if (Math.abs(x) < this.snapThreshold) {
+                    snappedX = 0;
+                    guides.push({ type: 'vertical', position: 0 });
+                }
+                
+                // 오른쪽 경계
+                if (Math.abs(x + width - canvasRect.width) < this.snapThreshold) {
+                    snappedX = canvasRect.width - width;
+                    guides.push({ type: 'vertical', position: canvasRect.width });
+                }
+                
+                // 상단 경계
+                if (Math.abs(y) < this.snapThreshold) {
+                    snappedY = 0;
+                    guides.push({ type: 'horizontal', position: 0 });
+                }
+                
+                // 하단 경계
+                if (Math.abs(y + height - canvasRect.height) < this.snapThreshold) {
+                    snappedY = canvasRect.height - height;
+                    guides.push({ type: 'horizontal', position: canvasRect.height });
+                }
+
+                return { x: snappedX, y: snappedY, guides };
+            }
+
+            // 요소의 스냅 포인트 계산
+            getElementSnapPoints(element) {
+                const points = [];
+                // 중심점
+                points.push({
+                    x: element.x + element.width / 2,
+                    y: element.y + element.height / 2
+                });
+                // 모서리
+                points.push({ x: element.x, y: element.y }); // 좌상단
+                points.push({ x: element.x + element.width, y: element.y }); // 우상단
+                points.push({ x: element.x, y: element.y + element.height }); // 좌하단
+                points.push({ x: element.x + element.width, y: element.y + element.height }); // 우하단
+                // 중앙선
+                points.push({ x: element.x, y: element.y + element.height / 2 }); // 좌중앙
+                points.push({ x: element.x + element.width, y: element.y + element.height / 2 }); // 우중앙
+                points.push({ x: element.x + element.width / 2, y: element.y }); // 상중앙
+                points.push({ x: element.x + element.width / 2, y: element.y + element.height }); // 하중앙
+                
+                return points;
+            }
+
+            // 현재 드래그 중인 요소의 스냅 포인트 계산
+            getSnapPoints(element) {
+                return this.getElementSnapPoints({
+                    ...element,
+                    x: this.draggedElement ? this.draggedElement.x : element.x,
+                    y: this.draggedElement ? this.draggedElement.y : element.y
+                });
+            }
+
+            setCanvasSize(deviceType) {
+                if (!confirm('Changing canvas size will clear all elements. Continue?')) {
+                    return;
+                }
+                const canvas = document.getElementById('canvas');
+
+                if (deviceType === 'custom') {
+                    const width = prompt('Enter width (px):', '800');
+                    const height = prompt('Enter height (px):', '600');
+                    if (width && height) {
+                        canvas.style.width = `${width}px`;
+                        canvas.style.height = `${height}px`;
+                    }
+                } else {
+                    const size = this.devicePresets[deviceType];
+                    canvas.style.width = `${size.width}px`;
+                    canvas.style.height = `${size.height}px`;
+                }
+
+                // 모든 요소 초기화
+                this.elements = [];
+                canvas.innerHTML = '';
+                this.selectedElement = null;
+                this.updateProperties();
+                this.updateLayersList();
+                
+                // 그리드 설정 유지
+                if (this.gridSize > 0) {
+                    canvas.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
+                }
+
+                this.currentDevice = deviceType;
+                this.saveHistory();
+            }
+
+            // 스냅 가이드라인 표시
+            showSnapGuides(guides) {
+                // 기존 가이드라인 제거
+                document.querySelectorAll('.snap-guide').forEach(guide => guide.remove());
+
+                guides.forEach(guide => {
+                    const guideElement = document.createElement('div');
+                    guideElement.className = 'snap-guide';
+                    
+                    if (guide.type === 'vertical') {
+                        guideElement.style.width = '2px';
+                        guideElement.style.height = '100%';
+                        guideElement.style.left = `${guide.position}px`;
+                        guideElement.style.top = '0';
+                    } else {
+                        guideElement.style.height = '2px';
+                        guideElement.style.width = '100%';
+                        guideElement.style.left = '0';
+                        guideElement.style.top = `${guide.position}px`;
+                    }
+
+                    document.getElementById('canvas').appendChild(guideElement);
+
+                    // 1초 후 가이드라인 제거
+                    setTimeout(() => guideElement.remove(), 1000);
+                });
+            }
+
+            addElement(type) {
+                this.maxZIndex++;
+                const element = {
+                    id: Date.now(),
+                    type,
+                    x: 100,
+                    y: 100,
+                    width: type === 'panel' ? this.panelDefaultSize.width : 120,
+                    height: type === 'panel' ? this.panelDefaultSize.height : 40,
+                    content: type === 'panel' ? '' : type.charAt(0).toUpperCase() + type.slice(1),
+                    zIndex: this.maxZIndex,
+                    fontSize: type === 'text' ? 16 : undefined,
+                    // 패널의 기본 색상 설정
+                    backgroundColor: type === 'panel' ? '#ffffff' : undefined,
+                    borderColor: type === 'panel' ? '#dddddd' : undefined,
+                    headerColor: type === 'panel' ? '#f5f5f5' : undefined,
+                    isPanel: type === 'panel'
+                };
+
+                this.elements.push(element);
+                this.renderElement(element);
+                this.selectElement(element);
+                this.saveHistory();
+            }
+
+            renderElement(element) {
+                const div = document.createElement('div');
+                div.id = `element-${element.id}`;
+                div.className = `element ${element.type}`;
+                div.style.left = `${element.x}px`;
+                div.style.top = `${element.y}px`;
+                div.style.width = `${element.width}px`;
+                div.style.height = `${element.height}px`;
+                div.style.zIndex = element.zIndex || 1;
+
+                if (element.type === 'panel') {
+
+                    div.style.backgroundColor = element.backgroundColor || '#ffffff';
+                    div.style.borderColor = element.borderColor || '#dddddd';
+
+                    div.innerHTML = `
+                        <div class="panel-header" style="background-color: ${element.headerColor || '#f5f5f5'}; border-bottom-color: ${element.borderColor || '#dddddd'}">
+                            <div class="panel-title">Panel</div>
+                            <button class="panel-close">×</button>
+                        </div>
+                        <div class="panel-content" style="background-color: ${element.backgroundColor || '#ffffff'}">${element.content}</div>
+                    `;
+
+                    // 패널 닫기 버튼 이벤트
+                    const closeBtn = div.querySelector('.panel-close');
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm('Delete this panel?')) {
+                            this.deleteElement(element.id);
+                        }
+                    });
+                }
+
+                if (element.type === 'text' && element.fontSize) {
+                    div.style.fontSize = `${element.fontSize}px`;
+                }
+                
+                if (element.type === 'button') {
+                    div.textContent = element.content;
+                } else if (element.type === 'input') {
+                    div.innerHTML = `<input type="text" placeholder="${element.content}" style="width:100%;height:100%;border:none;padding:4px;">`;
+                } else {
+                    div.textContent = element.content;
+                }
+
+                div.addEventListener('mousedown', (e) => {
+                    if (!e.target.classList.contains('panel-close')) {
+                        this.startDragging(e, element);
+                    }
+                });
+
+                div.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('panel-close')) {
+                        e.stopPropagation();
+                        this.selectElement(element);
+                    }
+                });
+
+                document.getElementById('canvas').appendChild(div);
+                this.updateLayersList();
+            }
+
+            startDragging(e, element) {
+                this.draggedElement = element;
+                const rect = document.getElementById(`element-${element.id}`).getBoundingClientRect();
+                this.offset = {
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                };
+
+                const moveHandler = (e) => this.handleDrag(e);
+                const upHandler = () => {
+                    document.removeEventListener('mousemove', moveHandler);
+                    document.removeEventListener('mouseup', upHandler);
+                    this.draggedElement = null;
+                    this.saveHistory();
+                };
+
+                document.addEventListener('mousemove', moveHandler);
+                document.addEventListener('mouseup', upHandler);
+            }
+
+            handleDrag(e) {
+                if (!this.draggedElement) return;
+
+                const canvas = document.getElementById('canvas');
+                const rect = canvas.getBoundingClientRect();
+                
+                let x = e.clientX - rect.left - this.offset.x;
+                let y = e.clientY - rect.top - this.offset.y;
+
+                // 그리드 스냅 (기존 기능 유지)
+                if (this.gridSize > 0) {
+                    x = Math.round(x / this.gridSize) * this.gridSize;
+                    y = Math.round(y / this.gridSize) * this.gridSize;
+                }
+
+                // 경계선 스냅
+                if (this.snapEnabled) {
+                    const snapResult = this.calculateSnap(
+                        x, 
+                        y, 
+                        this.draggedElement.width, 
+                        this.draggedElement.height
+                    );
+                    x = snapResult.x;
+                    y = snapResult.y;
+                    
+                    // 가이드라인 표시
+                    this.showSnapGuides(snapResult.guides);
+                }
+
+                // 요소 위치 업데이트
+                this.draggedElement.x = Math.max(0, x);
+                this.draggedElement.y = Math.max(0, y);
+
+                const elementDiv = document.getElementById(`element-${this.draggedElement.id}`);
+                elementDiv.style.left = `${this.draggedElement.x}px`;
+                elementDiv.style.top = `${this.draggedElement.y}px`;
+
+                this.updateProperties();
+            }
+
+            selectElement(element) {
+                if (this.selectedElement) {
+                    const prevDiv = document.getElementById(`element-${this.selectedElement.id}`);
+                    if (prevDiv) prevDiv.classList.remove('selected');
+                }
+
+                this.selectedElement = element;
+                const div = document.getElementById(`element-${element.id}`);
+                div.classList.add('selected');
+
+                this.updateProperties();
+                this.updateLayersList();
+                this.addResizeHandles(div);
+            }
+
+            addResizeHandles(elementDiv) {
+                // 기존 핸들 제거
+                elementDiv.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+
+                // 8방향 리사이즈 핸들 추가
+                const positions = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
+                positions.forEach(pos => {
+                    const handle = document.createElement('div');
+                    handle.className = `resize-handle ${pos}`;
+                    handle.addEventListener('mousedown', (e) => {
+                        e.stopPropagation();
+                        this.startResizing(e, this.selectedElement, pos);
+                    });
+                    elementDiv.appendChild(handle);
+                });
+            }
+
+            startResizing(e, element, handle) {
+                this.resizingElement = element;
+                this.resizeHandle = handle;
+                this.startSize = {
+                    width: element.width,
+                    height: element.height,
+                    x: element.x,
+                    y: element.y
+                };
+                this.startPos = {
+                    x: e.clientX,
+                    y: e.clientY
+                };
+
+                const moveHandler = (e) => this.handleResize(e);
+                const upHandler = () => {
+                    document.removeEventListener('mousemove', moveHandler);
+                    document.removeEventListener('mouseup', upHandler);
+                    this.resizingElement = null;
+                    this.resizeHandle = null;
+                    this.saveHistory();
+                };
+
+                document.addEventListener('mousemove', moveHandler);
+                document.addEventListener('mouseup', upHandler);
+            }
+
+            handleResize(e) {
+                if (!this.resizingElement) return;
+
+                const dx = e.clientX - this.startPos.x;
+                const dy = e.clientY - this.startPos.y;
+                
+                let newWidth = this.startSize.width;
+                let newHeight = this.startSize.height;
+                let newX = this.startSize.x;
+                let newY = this.startSize.y;
+
+                // 핸들 위치에 따른 리사이즈 처리
+                if (this.resizeHandle.includes('e')) newWidth = Math.max(50, this.startSize.width + dx);
+                if (this.resizeHandle.includes('w')) {
+                    const adjustedWidth = Math.max(50, this.startSize.width - dx);
+                    newX = this.startSize.x + (this.startSize.width - adjustedWidth);
+                    newWidth = adjustedWidth;
+                }
+                if (this.resizeHandle.includes('s')) newHeight = Math.max(30, this.startSize.height + dy);
+                if (this.resizeHandle.includes('n')) {
+                    const adjustedHeight = Math.max(30, this.startSize.height - dy);
+                    newY = this.startSize.y + (this.startSize.height - adjustedHeight);
+                    newHeight = adjustedHeight;
+                }
+
+                // 그리드에 맞추기
+                if (this.gridSize > 0) {
+                    newWidth = Math.round(newWidth / this.gridSize) * this.gridSize;
+                    newHeight = Math.round(newHeight / this.gridSize) * this.gridSize;
+                    newX = Math.round(newX / this.gridSize) * this.gridSize;
+                    newY = Math.round(newY / this.gridSize) * this.gridSize;
+                }
+
+                // 요소 업데이트
+                this.resizingElement.width = newWidth;
+                this.resizingElement.height = newHeight;
+                this.resizingElement.x = newX;
+                this.resizingElement.y = newY;
+
+                // DOM 업데이트
+                const elementDiv = document.getElementById(`element-${this.resizingElement.id}`);
+                elementDiv.style.width = `${newWidth}px`;
+                elementDiv.style.height = `${newHeight}px`;
+                elementDiv.style.left = `${newX}px`;
+                elementDiv.style.top = `${newY}px`;
+
+                this.updateProperties();
+            }
+
+            updateProperties() {
+                const propertiesDiv = document.getElementById('properties');
+                if (!this.selectedElement) {
+                    propertiesDiv.innerHTML = '<p>No element selected</p>';
+                    return;
+                }
+
+                // 패널일 경우 색상 컨트롤 추가
+                let colorControls = '';
+                if (this.selectedElement.type === 'panel') {
+                    colorControls = `
+                        <div class="property-group">
+                            <label class="property-label">Panel Colors</label>
+                            <div class="color-controls">
+                                <div class="color-control">
+                                    <label>Background</label>
+                                    <input type="color" 
+                                        value="${this.selectedElement.backgroundColor || '#ffffff'}"
+                                        onchange="tool.updatePanelColor('backgroundColor', this.value)">
+                                </div>
+                                <div class="color-control">
+                                    <label>Border</label>
+                                    <input type="color" 
+                                        value="${this.selectedElement.borderColor || '#dddddd'}"
+                                        onchange="tool.updatePanelColor('borderColor', this.value)">
+                                </div>
+                                <div class="color-control">
+                                    <label>Header</label>
+                                    <input type="color" 
+                                        value="${this.selectedElement.headerColor || '#f5f5f5'}"
+                                        onchange="tool.updatePanelColor('headerColor', this.value)">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let textControls = '';
+                if (this.selectedElement.type === 'text') {
+                    textControls = `
+                        <div class="property-group">
+                            <label class="property-label">Font Size</label>
+                            <div class="font-size-controls">
+                                <button onclick="tool.decreaseFontSize()">-</button>
+                                <input type="number" 
+                                    class="property-input" 
+                                    value="${this.selectedElement.fontSize || 16}"
+                                    onchange="tool.updateFontSize(this.value)">
+                                <button onclick="tool.increaseFontSize()">+</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                propertiesDiv.innerHTML = `
+                    <div class="property-group">
+                        <label class="property-label">Type</label>
+                        <div>${this.selectedElement.type}</div>
+                    </div>
+                    ${colorControls}
+                    ${textControls}
+                    <div class="property-group">
+                        <label class="property-label">Layer Position</label>
+                        <div class="layer-controls">
+                            <button onclick="tool.moveToTop()">맨 위로</button>
+                            <button onclick="tool.moveUp()">위로</button>
+                            <button onclick="tool.moveDown()">아래로</button>
+                            <button onclick="tool.moveToBottom()">맨 아래로</button>
+                        </div>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Position</label>
+                        <input type="number" class="property-input" value="${Math.round(this.selectedElement.x)}"
+                            onchange="tool.updateElementProperty('x', this.value)">
+                        <input type="number" class="property-input" value="${Math.round(this.selectedElement.y)}"
+                            onchange="tool.updateElementProperty('y', this.value)">
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Size</label>
+                        <input type="number" class="property-input" value="${Math.round(this.selectedElement.width)}"
+                            onchange="tool.updateElementProperty('width', this.value)">
+                        <input type="number" class="property-input" value="${Math.round(this.selectedElement.height)}"
+                            onchange="tool.updateElementProperty('height', this.value)">
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Content</label>
+                        <input type="text" class="property-input" value="${this.selectedElement.content}"
+                            onchange="tool.updateElementProperty('content', this.value)">
+                    </div>
+                `;
+            }
+
+            updatePanelColor(colorType, value) {
+                if (!this.selectedElement || this.selectedElement.type !== 'panel') return;
+
+                this.selectedElement[colorType] = value;
+                const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+
+                switch(colorType) {
+                    case 'backgroundColor':
+                        elementDiv.style.backgroundColor = value;
+                        elementDiv.querySelector('.panel-content').style.backgroundColor = value;
+                        break;
+                    case 'borderColor':
+                        elementDiv.style.borderColor = value;
+                        elementDiv.querySelector('.panel-header').style.borderBottomColor = value;
+                        break;
+                    case 'headerColor':
+                        elementDiv.querySelector('.panel-header').style.backgroundColor = value;
+                        break;
+                }
+
+                this.saveHistory();
+            }
+
+            updateElementProperty(property, value) {
+                if (!this.selectedElement) return;
+
+                const numValue = property === 'content' ? value : Number(value);
+                this.selectedElement[property] = numValue;
+
+                const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+                switch(property) {
+                    case 'x':
+                        elementDiv.style.left = `${numValue}px`;
+                        break;
+                    case 'y':
+                        elementDiv.style.top = `${numValue}px`;
+                        break;
+                    case 'width':
+                        elementDiv.style.width = `${numValue}px`;
+                        break;
+                    case 'height':
+                        elementDiv.style.height = `${numValue}px`;
+                        break;
+                    case 'content':
+                        if (this.selectedElement.type === 'input') {
+                            elementDiv.querySelector('input').placeholder = value;
+                        } else {
+                            elementDiv.textContent = value;
+                        }
+                        break;
+                }
+
+                this.saveHistory();
+                this.updateLayersList();
+            }
+
+            updateFontSize(size) {
+                if (!this.selectedElement || this.selectedElement.type !== 'text') return;
+                
+                const fontSize = Math.max(8, Math.min(72, parseInt(size))); // 8px ~ 72px 제한
+                this.selectedElement.fontSize = fontSize;
+                
+                const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+                elementDiv.style.fontSize = `${fontSize}px`;
+                
+                this.saveHistory();
+            }
+
+            increaseFontSize() {
+                if (!this.selectedElement || this.selectedElement.type !== 'text') return;
+                const currentSize = this.selectedElement.fontSize || 16;
+                this.updateFontSize(currentSize + 2);
+            }
+
+            decreaseFontSize() {
+                if (!this.selectedElement || this.selectedElement.type !== 'text') return;
+                const currentSize = this.selectedElement.fontSize || 16;
+                this.updateFontSize(currentSize - 2);
+            }
+
+            updateLayersList() {
+                const layersList = document.getElementById('layers-list');
+                layersList.innerHTML = '';
+
+                [...this.elements].reverse().forEach(element => {
+                    const layerItem = document.createElement('div');
+                    layerItem.className = `layer-item${element === this.selectedElement ? ' selected' : ''}`;
+                    
+                    layerItem.innerHTML = `
+                        <span>${element.type}: ${element.content}</span>
+                        <button onclick="tool.deleteElement(${element.id})">🗑️</button>
+                    `;
+
+                    layerItem.addEventListener('click', () => this.selectElement(element));
+                    layersList.appendChild(layerItem);
+                });
+            }
+
+            deleteElement(id) {
+                const elementToDelete = id ? this.elements.find(e => e.id === id) : this.selectedElement;
+                if (!elementToDelete) return;
+
+                const elementDiv = document.getElementById(`element-${elementToDelete.id}`);
+                if (elementDiv) elementDiv.remove();
+
+                this.elements = this.elements.filter(e => e !== elementToDelete);
+                if (this.selectedElement === elementToDelete) {
+                    this.selectedElement = null;
+                }
+
+                this.updateProperties();
+                this.updateLayersList();
+                this.saveHistory();
+            }
+
+            deleteSelected() {
+                this.deleteElement();
+            }
+
+            setGridSize(size) {
+                this.gridSize = parseInt(size);
+                const canvas = document.getElementById('canvas');
+                if (this.gridSize > 0) {
+                    canvas.style.backgroundSize = `${this.gridSize}px ${this.gridSize}px`;
+                } else {
+                    canvas.style.backgroundSize = '0';
+                }
+            }
+
+            clearSelection() {
+                if (this.selectedElement) {
+                    const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+                    if (elementDiv) {
+                        elementDiv.classList.remove('selected');
+                        elementDiv.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+                    }
+                }
+                this.selectedElement = null;
+                this.updateProperties();
+                this.updateLayersList();
+            }
+
+            // 요소를 맨 위로 이동
+            moveToTop() {
+                if (!this.selectedElement) return;
+                
+                this.maxZIndex++;
+                this.selectedElement.zIndex = this.maxZIndex;
+                const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+                elementDiv.style.zIndex = this.maxZIndex;
+                this.saveHistory();
+            }
+
+            // 요소를 한 단계 위로 이동
+            moveUp() {
+                if (!this.selectedElement) return;
+                
+                const currentZ = this.selectedElement.zIndex || 0;
+                const upperElement = this.elements.find(el => el.zIndex === currentZ + 1);
+                
+                if (upperElement) {
+                    upperElement.zIndex = currentZ;
+                    document.getElementById(`element-${upperElement.id}`).style.zIndex = currentZ;
+                    
+                    this.selectedElement.zIndex = currentZ + 1;
+                    document.getElementById(`element-${this.selectedElement.id}`).style.zIndex = currentZ + 1;
+                } else {
+                    this.moveToTop();
+                }
+                
+                this.saveHistory();
+            }
+
+            // 요소를 한 단계 아래로 이동
+            moveDown() {
+                if (!this.selectedElement) return;
+                
+                const currentZ = this.selectedElement.zIndex || 0;
+                const lowerElement = this.elements.find(el => el.zIndex === currentZ - 1);
+                
+                if (lowerElement && currentZ > 1) {
+                    lowerElement.zIndex = currentZ;
+                    document.getElementById(`element-${lowerElement.id}`).style.zIndex = currentZ;
+                    
+                    this.selectedElement.zIndex = currentZ - 1;
+                    document.getElementById(`element-${this.selectedElement.id}`).style.zIndex = currentZ - 1;
+                } else {
+                    this.moveToBottom();
+                }
+                
+                this.saveHistory();
+            }
+
+            // 요소를 맨 아래로 이동
+            moveToBottom() {
+                if (!this.selectedElement) return;
+                
+                this.elements.forEach(element => {
+                    if (element !== this.selectedElement) {
+                        element.zIndex = (element.zIndex || 0) + 1;
+                        const elementDiv = document.getElementById(`element-${element.id}`);
+                        elementDiv.style.zIndex = element.zIndex;
+                    }
+                });
+                
+                this.selectedElement.zIndex = 1;
+                document.getElementById(`element-${this.selectedElement.id}`).style.zIndex = 1;
+                
+                this.maxZIndex = Math.max(...this.elements.map(el => el.zIndex || 0));
+                this.saveHistory();
+            }
+
+            // 실행 취소/다시 실행 관련 메서드
+            saveHistory() {
+                this.history = this.history.slice(0, this.currentHistoryIndex + 1);
+                this.history.push(JSON.stringify(this.elements));
+                this.currentHistoryIndex++;
+            }
+
+            undo() {
+                if (this.currentHistoryIndex > 0) {
+                    this.currentHistoryIndex--;
+                    this.loadState(this.history[this.currentHistoryIndex]);
+                }
+            }
+
+            redo() {
+                if (this.currentHistoryIndex < this.history.length - 1) {
+                    this.currentHistoryIndex++;
+                    this.loadState(this.history[this.currentHistoryIndex]);
+                }
+            }
+
+            loadState(state) {
+                this.elements = JSON.parse(state);
+                this.selectedElement = null;
+                document.getElementById('canvas').innerHTML = '';
+                this.elements.forEach(element => this.renderElement(element));
+                this.updateProperties();
+            }
+
+            // 저장/불러오기 관련 메서드
+            save() {
+                const data = {
+                    elements: this.elements,
+                    gridSize: this.gridSize,
+                    device: this.currentDevice  // 디바이스 정보 추가
+                };
+                const json = JSON.stringify(data);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'prototype.json';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            load() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const data = JSON.parse(event.target.result);
+                        this.elements = data.elements;
+                        this.setGridSize(data.gridSize);
+                        if (data.device) {
+                            this.setCanvasSize(data.device);
+                        }
+                        document.getElementById('canvas').innerHTML = '';
+                        this.elements.forEach(element => this.renderElement(element));
+                        this.saveHistory();
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            // 이미지로 내보내기
+            async exportAsImage() {
+                const canvas = document.getElementById('canvas');
+                try {
+                    const imageCanvas = await html2canvas(canvas, {
+                        backgroundColor: 'white',
+                        scale: 2, // 고해상도를 위해 2배 스케일
+                        useCORS: true
+                    });
+                    
+                    const link = document.createElement('a');
+                    link.download = 'prototype.png';
+                    link.href = imageCanvas.toDataURL('image/png');
+                    link.click();
+                } catch (error) {
+                    console.error('Failed to export image:', error);
+                    alert('Failed to export image. Please try again.');
+                }
+            }
+
+            // HTML로 내보내기
+            exportAsHTML() {
+                // CSS 스타일 생성
+                const styles = `
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    .prototype-container {
+                        position: relative;
+                        width: ${this.currentDevice ? this.devicePresets[this.currentDevice].width : '100%'};
+                        height: ${this.currentDevice ? this.devicePresets[this.currentDevice].height : '100%'};
+                        background: white;
+                        overflow: hidden;
+                    }
+                    .element {
+                        position: absolute;
+                        background: white;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        padding: 8px;
+                    }
+                    .element.button {
+                        background: #2196f3;
+                        color: white;
+                        border: none;
+                        cursor: pointer;
+                        text-align: center;
+                    }
+                    .element.input input {
+                        width: 100%;
+                        height: 100%;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        padding: 4px;
+                    }
+                    .element.text {
+                        background: transparent;
+                        border: none;
+                    }
+                `;
+
+                // HTML 생성
+                let elementsHTML = '';
+                this.elements.forEach(element => {
+                    const style = `
+                        left: ${element.x}px;
+                        top: ${element.y}px;
+                        width: ${element.width}px;
+                        height: ${element.height}px;
+                        z-index: ${element.zIndex || 1};
+                        ${element.type === 'text' ? `font-size: ${element.fontSize || 16}px;` : ''}
+                    `;
+
+                    let content = '';
+                    switch(element.type) {
+                        case 'button':
+                            content = `<button style="width:100%;height:100%;background:#2196f3;color:white;border:none;border-radius:4px;cursor:pointer;">${element.content}</button>`;
+                            break;
+                        case 'input':
+                            content = `<input type="text" placeholder="${element.content}" style="width:100%;height:100%;">`;
+                            break;
+                        case 'text':
+                            content = element.content;
+                            break;
+                    }
+
+                    elementsHTML += `
+                        <div class="element ${element.type}" style="${style}">
+                            ${content}
+                        </div>
+                    `;
+                });
+
+                // 최종 HTML 문서 생성
+                const html = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Exported Prototype</title>
+                        <style>${styles}</style>
+                    </head>
+                    <body>
+                        <div class="prototype-container">
+                            ${elementsHTML}
+                        </div>
+                    </body>
+                    </html>`;
+
+                // HTML 파일 다운로드
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = 'prototype.html';
+                link.href = url;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+
+            // HTML 내보내기시 인터랙션 코드 생성
+            generateInteractions() {
+                let js = '';
+                
+                // 버튼 클릭 이벤트 등 인터랙션 코드 추가
+                this.elements.forEach(element => {
+                    if (element.type === 'button') {
+                        js += `
+                            document.querySelector('#element-${element.id} button').addEventListener('click', function() {
+                                console.log('Button clicked:', '${element.content}');
+                            });
+                        `;
+                    }
+                });
+
+                return js;
+            }
+
+            
+        }
+
+        // 툴 초기화
+        const tool = new PrototypingTool();
+    </script>
+</body>
+</html>
