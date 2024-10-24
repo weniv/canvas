@@ -10,6 +10,7 @@ class PrototypingTool {
         this.history = [];
         this.currentHistoryIndex = -1;
         this.maxZIndex = 1;
+        this.clipboard = null;
         this.panelDefaultSize = {
             width: 200,
             height: 150
@@ -64,15 +65,64 @@ class PrototypingTool {
             if (e.key === 'Delete' && this.selectedElement) {
                 this.deleteSelected();
             }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-                e.preventDefault();
-                this.undo();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-                e.preventDefault();
-                this.redo();
+            if ((e.ctrlKey || e.metaKey)) {
+                switch(e.key.toLowerCase()) {
+                    case 'z':
+                        e.preventDefault();
+                        this.undo();
+                        break;
+                    case 'y':
+                        e.preventDefault();
+                        this.redo();
+                        break;
+                    case 'c':
+                        e.preventDefault();
+                        this.copyElement();
+                        break;
+                    case 'v':
+                        e.preventDefault();
+                        this.pasteElement();
+                        break;
+                }
             }
         });
+    }
+
+
+    copyElement() {
+        if (!this.selectedElement) return;
+        
+        // 깊은 복사를 위해 JSON 사용
+        this.clipboard = JSON.parse(JSON.stringify(this.selectedElement));
+        
+        // 복사 성공 피드백 (옵션)
+        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        if (elementDiv) {
+            elementDiv.style.transition = 'transform 0.1s';
+            elementDiv.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                elementDiv.style.transform = 'scale(1)';
+            }, 100);
+        }
+    }
+    
+    pasteElement() {
+        if (!this.clipboard) return;
+        
+        // 새로운 ID 생성과 위치 조정
+        const newElement = {
+            ...this.clipboard,
+            id: Date.now(),
+            x: this.clipboard.x + 20, // 약간 오프셋을 주어 겹치지 않게
+            y: this.clipboard.y + 20,
+            zIndex: this.maxZIndex + 1
+        };
+        
+        this.maxZIndex++;
+        this.elements.push(newElement);
+        this.renderElement(newElement);
+        this.selectElement(newElement);
+        this.saveHistory();
     }
 
     // 캔버스 경계선에만 스냅하도록 단순화된 계산
