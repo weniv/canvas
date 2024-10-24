@@ -118,10 +118,10 @@ body {
     border: 1px solid #ddd;
 }
 
-.element.text {
+/* .element.text {
     background: transparent;
     border: none;
-}
+} */
 
 .resize-handle {
     position: absolute;
@@ -336,7 +336,7 @@ h2 {
     100% { opacity: 0; }
 }
 
-.editable-text {
+/* .editable-text {
     border: none;
     background: transparent;
     font-family: inherit;
@@ -347,15 +347,15 @@ h2 {
     justify-content: center;
     text-align: center;
     cursor: text;
-}
+} */
 
-.element.text {
+/* .element.text {
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-}
+} */
 
 .text-controls {
     display: flex;
@@ -717,11 +717,56 @@ h2 {
     width: 200px;
     background: #f5f5f5;
     border-right: 1px solid #ddd;
+    height: 100%;  /* 전체 높이 사용 */
 }
 
 .pages-panel {
     border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    height: 30%;  /* 왼쪽 패널의 50% 높이 사용 */
+}
+
+.pages-panel .panel-header {
     padding: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;  /* 헤더 크기 고정 */
+}
+
+.pages-list {
+    padding: 16px;
+    padding-top: 8px;
+    overflow-y: auto;  /* 스크롤 추가 */
+    flex: 1;  /* 남은 공간 차지 */
+}
+
+.components-panel {
+    padding: 16px;
+    overflow-y: auto;
+    flex: 1;  /* 남은 공간 차지 */
+}
+
+/* 스크롤바 스타일링 (pages-list와 components-panel 모두 적용) */
+.pages-list::-webkit-scrollbar,
+.components-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pages-list::-webkit-scrollbar-track,
+.components-panel::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.pages-list::-webkit-scrollbar-thumb,
+.components-panel::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.pages-list::-webkit-scrollbar-thumb:hover,
+.components-panel::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
 .pages-list {
@@ -797,4 +842,71 @@ h2 {
 
 .pages-panel .panel-header button:hover {
     background: #1976d2;
+}
+
+.element.link {
+    background: rgba(33, 150, 243, 0.15);
+    border: 2px dashed #2196f3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.element.link:hover {
+    background: rgba(33, 150, 243, 0.3);
+}
+
+.preview-mode .element.link {
+    background: transparent;
+    border: none;
+}
+
+.preview-mode .element.link:hover {
+    background: rgba(33, 150, 243, 0.1);
+}
+
+.preview-mode .element.link .link-content {
+    opacity: 0;
+}
+
+.preview-mode .element.link:hover .link-content {
+    opacity: 0.7;
+}
+
+.text-align-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.text-align-controls .style-button {
+    font-size: 16px;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+}
+
+.element.text {
+    cursor: pointer;
+    /* display: flex와 align-items 제거 */
+    padding: 0; /* padding을 0으로 설정 */
+    text-align: inherit; /* 부모로부터 정렬 상속 */
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.editable-text {
+    width: 100%;
+    height: 100%;
+    outline: none;
+    text-align: inherit; /* 부모로부터 정렬 상속 */
+    padding: 8px; /* 패딩은 여기서 설정 */
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
 }

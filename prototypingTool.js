@@ -329,15 +329,18 @@ class PrototypingTool {
             type,
             x: 100,
             y: 100,
-            width: type === 'box' ? 200 : 
+            width: type === 'link' ? 150 :
+                    (type === 'box' ? 200 : 
                     (type === 'sticky' ? 200 : 
-                    (type === 'panel' ? this.panelDefaultSize.width : 120)),
-            height: type === 'box' ? 200 : 
+                    (type === 'panel' ? this.panelDefaultSize.width : 120))),
+            height: type === 'link' ? 60 :
+                    (type === 'box' ? 200 : 
                     (type === 'sticky' ? 200 : 
-                    (type === 'panel' ? this.panelDefaultSize.height : 40)),
+                    (type === 'panel' ? this.panelDefaultSize.height : 40))),
             name: this.generateElementName(type),
-            content: type === 'sticky' ? 'Double click to edit memo' : 
-                    (type === 'panel' ? '' : type.charAt(0).toUpperCase() + type.slice(1)),
+            content: type === 'link' ? '🔗 Click to set target page' :
+                    (type === 'sticky' ? 'Double click to edit memo' : 
+                    (type === 'panel' ? '' : type.charAt(0).toUpperCase() + type.slice(1))),
             zIndex: this.maxZIndex,
             opacity: type === 'sticky' ? 1 : undefined,
             fontSize: type === 'text' ? 16 : undefined,
@@ -350,7 +353,9 @@ class PrototypingTool {
             headerColor: type === 'panel' ? '#f5f5f5' : undefined,
             isPanel: type === 'panel',
             isBold: false,
-            stickyColor: type === 'sticky' ? this.stickyColors[0] : undefined
+            stickyColor: type === 'sticky' ? this.stickyColors[0] : undefined,
+            targetPageId: null,
+            justifyContent: type === 'text' ? 'center' : undefined
         };
 
         this.elements.push(element);
@@ -616,10 +621,21 @@ class PrototypingTool {
             if (element.isBold) {
                 div.style.fontWeight = 'bold';
             }
+            div.style.justifyContent = element.justifyContent || 'center';  // 정렬 적용
             // 더블클릭 이벤트 추가
             div.addEventListener('dblclick', (e) => {
                 e.stopPropagation();
                 this.startEditing(element);
+            });
+        }
+        else if (element.type === 'link') {
+            div.innerHTML = `<div class="link-content">${element.content}</div>`;
+    
+            div.addEventListener('click', (e) => {
+                if (this.previewMode && element.targetPageId) {
+                    e.stopPropagation();
+                    this.switchPage(element.targetPageId);
+                }
             });
         }
         else if (element.type === 'button') {
@@ -637,10 +653,19 @@ class PrototypingTool {
             if (!e.target.classList.contains('resize-handle')) {
                 this.startDragging(e, element);
             }
+            if (!this.previewMode) {  // 미리보기 모드가 아닐 때만 드래그 허용
+                if (!e.target.classList.contains('resize-handle')) {
+                    this.startDragging(e, element);
+                }
+            }
         });
     
         div.addEventListener('click', (e) => {
             if (!e.target.classList.contains('panel-close')) {
+                e.stopPropagation();
+                this.selectElement(element);
+            }
+            if (!this.previewMode) {  // 미리보기 모드가 아닐 때만 선택 허용
                 e.stopPropagation();
                 this.selectElement(element);
             }
@@ -664,6 +689,7 @@ class PrototypingTool {
         editableDiv.style.width = '100%';
         editableDiv.style.height = '100%';
         editableDiv.style.outline = 'none';
+        editableDiv.style.justifyContent = element.justifyContent || 'center';
         editableDiv.style.fontSize = element.fontSize ? `${element.fontSize}px` : '16px';
         
         elementDiv.appendChild(editableDiv);
@@ -1091,6 +1117,27 @@ class PrototypingTool {
             `;
         }
 
+        let linkControls = '';
+        if (this.selectedElement.type === 'link') {
+            linkControls = `
+                <div class="property-group">
+                    <label class="property-label">Target Page</label>
+                    <select class="link-target-select" 
+                            onchange="tool.updateLinkTarget(this.value)">
+                        <option value="">Select target page...</option>
+                        ${Array.from(this.pages.entries())
+                            .filter(([pageId]) => pageId !== this.currentPageId)
+                            .map(([pageId, page]) => `
+                                <option value="${pageId}" 
+                                    ${this.selectedElement.targetPageId === pageId ? 'selected' : ''}>
+                                    ${page.name}
+                                </option>
+                            `).join('')}
+                    </select>
+                </div>
+            `;
+        }
+
         let boxControls = '';
         if (this.selectedElement.type === 'box') {
             boxControls = `
@@ -1179,13 +1226,35 @@ class PrototypingTool {
                         >
                             <b>B</b>
                         </button>
-                        <!-- 기존 폰트 사이즈 컨트롤 -->
                         <input type="number" 
                             class="property-input" 
                             value="${this.selectedElement.fontSize || 16}"
                             onchange="tool.updateFontSize(this.value)"
                             style="width: 60px"
                         >
+                        <div class="text-align-controls">
+                            <button 
+                                class="style-button ${this.selectedElement.textAlign === 'left' ? 'active' : ''}"
+                                onclick="tool.updateTextAlign('start')"
+                                title="Align Left"
+                            >
+                                ⇤
+                            </button>
+                            <button 
+                                class="style-button ${this.selectedElement.textAlign === 'center' ? 'active' : ''}"
+                                onclick="tool.updateTextAlign('center')"
+                                title="Align Center"
+                            >
+                                ⇔
+                            </button>
+                            <button 
+                                class="style-button ${this.selectedElement.textAlign === 'right' ? 'active' : ''}"
+                                onclick="tool.updateTextAlign('end')"
+                                title="Align Right"
+                            >
+                                ⇥
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1199,6 +1268,7 @@ class PrototypingTool {
             ${colorControls}
             ${textControls}
             ${boxControls}
+            ${linkControls}
             <div class="property-group">
                 <label class="property-label">Layer Position</label>
                 <div class="layer-controls">
@@ -1236,6 +1306,65 @@ class PrototypingTool {
         if (textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
+        }
+    }
+
+    updateTextAlign(align) {
+        if (!this.selectedElement || this.selectedElement.type !== 'text') return;
+        
+        this.selectedElement.justifyContent = align;
+        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        if (elementDiv) {
+            elementDiv.style.justifyContent = align;
+            // 편집 중인 경우에도 적용
+            const editableDiv = elementDiv.querySelector('.editable-text');
+            if (editableDiv) {
+                editableDiv.style.justifyContent = align;
+            }
+        }
+        
+        this.updateProperties();
+        this.saveHistory();
+    }
+
+    updateLinkTarget(pageId) {
+        if (!this.selectedElement || this.selectedElement.type !== 'link') return;
+        
+        // pageId를 숫자로 변환 (select의 value는 문자열로 전달됨)
+        const targetPageId = pageId ? parseInt(pageId) : null;
+        this.selectedElement.targetPageId = targetPageId;
+        
+        // content 업데이트
+        if (targetPageId && this.pages.has(targetPageId)) {
+            this.selectedElement.content = `🔗 Go to: ${this.pages.get(targetPageId).name}`;
+        } else {
+            this.selectedElement.content = '🔗 Click to set target page';
+        }
+        
+        // DOM 업데이트
+        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        if (elementDiv) {
+            const linkContent = elementDiv.querySelector('.link-content');
+            if (linkContent) {
+                linkContent.textContent = this.selectedElement.content;
+            }
+        }
+        
+        this.saveHistory();
+    }
+    
+    // 미리보기 모드 토글
+    togglePreviewMode() {
+        this.previewMode = !this.previewMode;
+        document.body.classList.toggle('preview-mode', this.previewMode);
+        
+        const previewButton = document.querySelector('.toolbar button[title="Toggle Preview Mode"]');
+        if (previewButton) {
+            previewButton.textContent = this.previewMode ? '✏️ Edit' : '👁️ Preview';
+        }
+        
+        if (this.previewMode) {
+            this.clearSelection();
         }
     }
 
@@ -1580,14 +1709,23 @@ class PrototypingTool {
         // 현재 페이지 상태 저장
         if (this.currentPageId) {
             const currentPage = this.pages.get(this.currentPageId);
-            currentPage.elements = this.elements;
-            currentPage.device = this.currentDevice;
-            currentPage.gridSize = this.gridSize;
+            if (currentPage) {
+                currentPage.elements = this.elements;
+                currentPage.device = this.currentDevice;
+                currentPage.gridSize = this.gridSize;
+            }
         }
         
         const data = {
-            pages: Array.from(this.pages.entries()),
-            currentPageId: this.currentPageId
+            pages: Array.from(this.pages.entries()).map(([pageId, page]) => ({
+                id: pageId,
+                name: page.name,
+                elements: page.elements,
+                device: page.device,
+                gridSize: page.gridSize
+            })),
+            currentPageId: this.currentPageId,
+            maxZIndex: this.maxZIndex
         };
         
         const json = JSON.stringify(data);
@@ -1609,10 +1747,54 @@ class PrototypingTool {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = (event) => {
-                const data = JSON.parse(event.target.result);
-                this.pages = new Map(data.pages);
-                this.currentPageId = data.currentPageId;
-                this.switchPage(this.currentPageId);
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    // 페이지 맵 재구성
+                    this.pages = new Map(
+                        data.pages.map(page => [
+                            page.id,
+                            {
+                                id: page.id,
+                                name: page.name,
+                                elements: page.elements,
+                                device: page.device,
+                                gridSize: page.gridSize
+                            }
+                        ])
+                    );
+                    
+                    // 현재 페이지 ID 설정
+                    this.currentPageId = data.currentPageId;
+                    
+                    // maxZIndex 복원
+                    this.maxZIndex = data.maxZIndex || Math.max(
+                        ...data.pages.flatMap(page => 
+                            page.elements.map(el => el.zIndex || 0)
+                        ),
+                        0
+                    );
+    
+                    // 현재 페이지로 전환
+                    if (this.currentPageId && this.pages.has(this.currentPageId)) {
+                        const currentPage = this.pages.get(this.currentPageId);
+                        this.elements = currentPage.elements || [];
+                        this.currentDevice = currentPage.device;
+                        this.setGridSize(currentPage.gridSize || 0);
+                        
+                        // UI 업데이트
+                        this.renderCanvas();
+                        this.updatePageList();
+                    } else if (this.pages.size > 0) {
+                        // 현재 페이지가 없으면 첫 번째 페이지로
+                        this.currentPageId = this.pages.keys().next().value;
+                        this.switchPage(this.currentPageId);
+                    }
+    
+                } catch (error) {
+                    console.error('Error loading file:', error);
+                    alert('Failed to load the file. Please make sure it is a valid prototype file.');
+                }
             };
             reader.readAsText(file);
         };
