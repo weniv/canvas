@@ -428,7 +428,7 @@ h2 {
 }
 
 .element.image {
-    overflow: hidden;
+    /* overflow: hidden; */
     background: #fff;
     border: 1px solid #ddd;
     padding: 0;
@@ -662,4 +662,48 @@ h2 {
 
 .shortcut-close:hover {
     color: #333;
+}
+
+.layer-item {
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.layer-info {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.layer-name {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layer-type {
+    color: #666;
+    font-size: 0.8em;
+}
+
+.layer-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.layer-actions button {
+    padding: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.layer-actions button:hover {
+    opacity: 1;
 }

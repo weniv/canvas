@@ -310,6 +310,7 @@ class PrototypingTool {
             height: type === 'box' ? 200 : 
                     (type === 'sticky' ? 200 : 
                     (type === 'panel' ? this.panelDefaultSize.height : 40)),
+            name: this.generateElementName(type),
             content: type === 'sticky' ? 'Double click to edit memo' : 
                     (type === 'panel' ? '' : type.charAt(0).toUpperCase() + type.slice(1)),
             zIndex: this.maxZIndex,
@@ -371,6 +372,7 @@ class PrototypingTool {
                         y: 100,
                         width: width,
                         height: height,
+                        name: this.generateElementName('image'),
                         content: reader.result,
                         aspectRatio: tempImage.width / tempImage.height,
                         zIndex: this.maxZIndex
@@ -391,6 +393,36 @@ class PrototypingTool {
     
             reader.readAsDataURL(file);
         });
+    }
+
+    generateElementName(type) {
+        const counts = this.elements.reduce((acc, el) => {
+            if (el.type === type) {
+                acc[type] = (acc[type] || 0) + 1;
+            }
+            return acc;
+        }, {});
+        
+        const count = (counts[type] || 0) + 1;
+        
+        switch(type) {
+            case 'text':
+                return `Text ${count}`;
+            case 'button':
+                return `Button ${count}`;
+            case 'input':
+                return `Input ${count}`;
+            case 'panel':
+                return `Panel ${count}`;
+            case 'box':
+                return `Box ${count}`;
+            case 'sticky':
+                return `Note ${count}`;
+            case 'image':
+                return `Image ${count}`;
+            default:
+                return `Element ${count}`;
+        }
     }
 
     showImageDialog() {
@@ -1351,17 +1383,36 @@ class PrototypingTool {
             const layerItem = document.createElement('div');
             layerItem.className = `layer-item${element === this.selectedElement ? ' selected' : ''}`;
             
-            // 이미지일 경우와 다른 타입일 경우 다르게 표시
-            const content = element.type === 'image' ? 'Image' : element.content;
-            
             layerItem.innerHTML = `
-                <span>${element.type}: ${content}</span>
-                <button onclick="tool.deleteElement(${element.id})">🗑️</button>
+                <div class="layer-info">
+                    <span class="layer-name">${element.name}</span>
+                    <small class="layer-type">${element.type}</small>
+                </div>
+                <div class="layer-actions">
+                    <button class="edit-name-btn" onclick="tool.editElementName(${element.id})" title="Edit Name">✏️</button>
+                    <button class="delete-btn" onclick="tool.deleteElement(${element.id})" title="Delete">🗑️</button>
+                </div>
             `;
     
-            layerItem.addEventListener('click', () => this.selectElement(element));
+            layerItem.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    this.selectElement(element);
+                }
+            });
             layersList.appendChild(layerItem);
         });
+    }
+
+    editElementName(elementId) {
+        const element = this.elements.find(el => el.id === elementId);
+        if (!element) return;
+    
+        const newName = prompt('Enter new name:', element.name);
+        if (newName && newName.trim()) {
+            element.name = newName.trim();
+            this.updateLayersList();
+            this.saveHistory();
+        }
     }
 
     deleteElement(id) {
