@@ -34,19 +34,28 @@
     </div>
 
     <div class="main-container">
-        <div class="components-panel">
-            <h2>Components</h2>
-            <button class="component-btn" data-type="button">Button</button>
-            <button class="component-btn" data-type="input">Input</button>
-            <button class="component-btn" data-type="text">Text</button>
-            <button class="component-btn" data-type="box">Box</button>
-            <button class="component-btn" data-type="sticky">Sticky Note</button>
-            <button class="component-btn" data-type="panel">Panel</button>
-            <button class="component-btn" data-type="image">Image</button>
-            
-            <div class="layers-list">
-                <h2>Layers</h2>
-                <div id="layers-list"></div>
+        <div class="left-panel">
+            <div class="pages-panel">
+                <div class="panel-header">
+                    <h2>Pages</h2>
+                    <button onclick="tool.addNewPage()">+ New Page</button>
+                </div>
+                <div id="pages-list" class="pages-list"></div>
+            </div>
+            <div class="components-panel">
+                <h2>Components</h2>
+                <button class="component-btn" data-type="button">Button</button>
+                <button class="component-btn" data-type="input">Input</button>
+                <button class="component-btn" data-type="text">Text</button>
+                <button class="component-btn" data-type="box">Box</button>
+                <button class="component-btn" data-type="sticky">Sticky Note</button>
+                <button class="component-btn" data-type="panel">Panel</button>
+                <button class="component-btn" data-type="image">Image</button>
+                
+                <div class="layers-list">
+                    <h2>Layers</h2>
+                    <div id="layers-list"></div>
+                </div>
             </div>
         </div>
         

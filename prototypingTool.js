@@ -22,6 +22,8 @@ class PrototypingTool {
             '#98ff98', // 연두
             '#ffb347'  // 주황
         ];
+        this.pages = new Map(); // 페이지 저장소
+        this.currentPageId = null; // 현재 페이지 ID
 
         this.devicePresets = {
             'desktop': { width: 1920, height: 1080 },
@@ -43,9 +45,32 @@ class PrototypingTool {
             medium: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
             long: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
         };
+
+        // 첫 페이지 생성
+        this.createPage('Home');
         
         this.initializeEvents();
         this.saveHistory();
+    }
+
+    createPage(pageName) {
+        const pageId = Date.now();
+        const page = {
+            id: pageId,
+            name: pageName,
+            elements: [],
+            device: this.currentDevice,
+            gridSize: this.gridSize
+        };
+        
+        this.pages.set(pageId, page);
+        
+        if (!this.currentPageId) {
+            this.currentPageId = pageId;
+        }
+        
+        this.updatePageList();
+        return pageId;
     }
 
     initializeEvents() {
@@ -1560,11 +1585,19 @@ class PrototypingTool {
 
     // 저장/불러오기 관련 메서드
     save() {
+        // 현재 페이지 상태 저장
+        if (this.currentPageId) {
+            const currentPage = this.pages.get(this.currentPageId);
+            currentPage.elements = this.elements;
+            currentPage.device = this.currentDevice;
+            currentPage.gridSize = this.gridSize;
+        }
+        
         const data = {
-            elements: this.elements,
-            gridSize: this.gridSize,
-            device: this.currentDevice  // 디바이스 정보 추가
+            pages: Array.from(this.pages.entries()),
+            currentPageId: this.currentPageId
         };
+        
         const json = JSON.stringify(data);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -1575,7 +1608,7 @@ class PrototypingTool {
         a.click();
         URL.revokeObjectURL(url);
     }
-
+    
     load() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -1585,14 +1618,9 @@ class PrototypingTool {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const data = JSON.parse(event.target.result);
-                this.elements = data.elements;
-                this.setGridSize(data.gridSize);
-                if (data.device) {
-                    this.setCanvasSize(data.device);
-                }
-                document.getElementById('canvas').innerHTML = '';
-                this.elements.forEach(element => this.renderElement(element));
-                this.saveHistory();
+                this.pages = new Map(data.pages);
+                this.currentPageId = data.currentPageId;
+                this.switchPage(this.currentPageId);
             };
             reader.readAsText(file);
         };
@@ -1918,6 +1946,100 @@ class PrototypingTool {
         });
 
         return js;
+    }
+
+    addNewPage() {
+        const pageName = prompt('Enter page name:', `Page ${this.pages.size + 1}`);
+        if (pageName && pageName.trim()) {
+            this.createPage(pageName.trim());
+        }
+    }
+    
+    switchPage(pageId) {
+        if (!this.pages.has(pageId)) return;
+        
+        // 현재 페이지 상태 저장
+        if (this.currentPageId) {
+            const currentPage = this.pages.get(this.currentPageId);
+            currentPage.elements = this.elements;
+            currentPage.device = this.currentDevice;
+            currentPage.gridSize = this.gridSize;
+        }
+        
+        // 새 페이지 로드
+        const newPage = this.pages.get(pageId);
+        this.elements = [...newPage.elements];
+        this.currentPageId = pageId;
+        this.currentDevice = newPage.device;
+        this.gridSize = newPage.gridSize;
+        
+        // UI 업데이트
+        this.renderCanvas();
+        this.updatePageList();
+    }
+    
+    renamePage(pageId) {
+        const page = this.pages.get(pageId);
+        if (!page) return;
+        
+        const newName = prompt('Enter new page name:', page.name);
+        if (newName && newName.trim()) {
+            page.name = newName.trim();
+            this.updatePageList();
+        }
+    }
+    
+    deletePage(pageId) {
+        if (this.pages.size <= 1) {
+            alert('Cannot delete the last page');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to delete this page?')) {
+            this.pages.delete(pageId);
+            if (this.currentPageId === pageId) {
+                this.currentPageId = this.pages.keys().next().value;
+                this.switchPage(this.currentPageId);
+            } else {
+                this.updatePageList();
+            }
+        }
+    }
+    
+    updatePageList() {
+        const pagesList = document.getElementById('pages-list');
+        pagesList.innerHTML = '';
+        
+        this.pages.forEach((page, pageId) => {
+            const pageItem = document.createElement('div');
+            pageItem.className = `page-item${pageId === this.currentPageId ? ' active' : ''}`;
+            
+            pageItem.innerHTML = `
+                <span class="page-name">${page.name}</span>
+                <div class="page-actions">
+                    <button onclick="tool.renamePage(${pageId})" title="Rename">✏️</button>
+                    <button onclick="tool.deletePage(${pageId})" title="Delete">🗑️</button>
+                </div>
+            `;
+            
+            pageItem.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    this.switchPage(pageId);
+                }
+            });
+            
+            pagesList.appendChild(pageItem);
+        });
+    }
+    
+    // 캔버스 렌더링 메서드
+    renderCanvas() {
+        const canvas = document.getElementById('canvas');
+        canvas.innerHTML = '';
+        this.elements.forEach(element => this.renderElement(element));
+        this.selectedElement = null;
+        this.updateProperties();
+        this.updateLayersList();
     }
 
     

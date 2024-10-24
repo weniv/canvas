@@ -707,3 +707,91 @@ h2 {
 .layer-actions button:hover {
     opacity: 1;
 }
+
+.left-panel {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    background: #f5f5f5;
+    border-right: 1px solid #ddd;
+}
+
+.pages-panel {
+    border-bottom: 1px solid #ddd;
+    padding: 16px;
+}
+
+.pages-list {
+    margin-top: 8px;
+}
+
+.page-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 4px 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.page-item.active {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.page-item .page-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.page-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+}
+
+.page-item:hover .page-actions {
+    opacity: 1;
+}
+
+.page-actions button {
+    padding: 2px 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.pages-panel .panel-header {
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.pages-panel .panel-header h2 {
+    margin: 0;
+}
+
+.pages-panel .panel-header button {
+    padding: 6px 12px;
+    background: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pages-panel .panel-header button:hover {
+    background: #1976d2;
+}
