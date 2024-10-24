@@ -28,7 +28,7 @@
             <option value="ipad">iPad (820x1180)</option>
             <option value="custom">Custom Size</option>
         </select>
-        <!-- <button onclick="tool.exportAsImage()">🖼️ Export Image</button> -->
+        <button onclick="tool.exportAsImage()">🖼️ Export Image</button>
         <!-- <button onclick="tool.exportAsHTML()">📄 Export HTML</button> -->
     </div>
 
@@ -881,20 +881,69 @@
             // 이미지로 내보내기
             async exportAsImage() {
                 const canvas = document.getElementById('canvas');
+
+                // 현재 상태를 저장
+                const originalStyle = canvas.style.backgroundImage;
+                const selectedElement = this.selectedElement;
+                const resizeHandles = document.querySelectorAll('.resize-handle');
+                
                 try {
-                    const imageCanvas = await html2canvas(canvas, {
-                        backgroundColor: 'white',
-                        scale: 2, // 고해상도를 위해 2배 스케일
-                        useCORS: true
-                    });
+                    // 1. 그리드 제거
+                    canvas.style.backgroundImage = 'none';
                     
+                    // 2. 선택된 요소의 상태 제거
+                    if(selectedElement) {
+                        const selectedDiv = document.getElementById(`element-${selectedElement.id}`);
+                        if(selectedDiv) selectedDiv.classList.remove('selected');
+                    }
+                    
+                    // 3. 리사이즈 핸들 임시 숨김
+                    resizeHandles.forEach(handle => {
+                        handle.style.display = 'none';
+                    });
+
+                    // html2canvas 옵션 설정
+                    const options = {
+                        backgroundColor: '#ffffff',
+                        scale: 2, // 고해상도
+                        useCORS: true,
+                        logging: false,
+                        removeContainer: false,
+                        ignoreElements: (element) => {
+                            // resize-handle 클래스를 가진 요소 무시
+                            return element.classList.contains('resize-handle');
+                        }
+                    };
+
+                    // 이미지 생성
+                    const imageCanvas = await html2canvas(canvas, options);
+                    
+                    // 이미지 다운로드
                     const link = document.createElement('a');
                     link.download = 'prototype.png';
-                    link.href = imageCanvas.toDataURL('image/png');
+                    link.href = imageCanvas.toDataURL('image/png', 1.0);
                     link.click();
+
                 } catch (error) {
                     console.error('Failed to export image:', error);
                     alert('Failed to export image. Please try again.');
+                } finally {
+                    // 모든 상태 복원
+                    canvas.style.backgroundImage = originalStyle;
+                    
+                    if(selectedElement) {
+                        const selectedDiv = document.getElementById(`element-${selectedElement.id}`);
+                        if(selectedDiv) {
+                            selectedDiv.classList.add('selected');
+                            // 리사이즈 핸들 다시 표시
+                            this.addResizeHandles(selectedDiv);
+                        }
+                    }
+
+                    // 숨겼던 리사이즈 핸들 복원
+                    resizeHandles.forEach(handle => {
+                        handle.style.display = '';
+                    });
                 }
             }
 
