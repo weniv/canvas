@@ -1797,6 +1797,26 @@ class PrototypingTool {
                     </div>
                 </div>
 
+                <div class="shortcut-section">
+                    <h3>lorem ipsum</h3>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span>lorem</span>
+                            <div class="shortcut-keys">
+                                <span class="key">lorem</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>lorem</span>
+                            <div class="shortcut-keys">
+                                <span class="key">1lorem, .lorem</span>
+                                <span class="key">2lorem, ..lorem</span>
+                                <span class="key">3lorem, ...lorem</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         `;
     
@@ -1886,7 +1906,7 @@ class PrototypingTool {
             let content = '';
             switch(element.type) {
                 case 'button':
-                    content = `<button style="width:100%;height:100%;background:#2196f3;color:white;border:none;border-radius:4px;cursor:pointer;">${element.content}</button>`;
+                    content = `<button style="width:100%;height:100%;background:#2196f3;color:white;border:none;border-radius:4px;cursor:pointer;display:flex;justify-content:center;align-items:center;">${element.content}</button>`;
                     break;
                 case 'input':
                     content = `<input type="text" placeholder="${element.content}" style="width:100%;height:100%;">`;

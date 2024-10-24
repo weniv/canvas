@@ -108,6 +108,9 @@ body {
     background: #2196f3;
     color: white;
     text-align: center;
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }
 
 .element.input {
