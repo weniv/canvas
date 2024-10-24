@@ -216,15 +216,22 @@ class PrototypingTool {
             type,
             x: 100,
             y: 100,
-            width: type === 'sticky' ? 200 : (type === 'panel' ? this.panelDefaultSize.width : 120),
-            height: type === 'sticky' ? 200 : (type === 'panel' ? this.panelDefaultSize.height : 40),
+            width: type === 'box' ? 200 : 
+                    (type === 'sticky' ? 200 : 
+                    (type === 'panel' ? this.panelDefaultSize.width : 120)),
+            height: type === 'box' ? 200 : 
+                    (type === 'sticky' ? 200 : 
+                    (type === 'panel' ? this.panelDefaultSize.height : 40)),
             content: type === 'sticky' ? 'Double click to edit memo' : 
                     (type === 'panel' ? '' : type.charAt(0).toUpperCase() + type.slice(1)),
             zIndex: this.maxZIndex,
             fontSize: type === 'text' ? 16 : undefined,
             // 패널의 기본 색상 설정
-            backgroundColor: type === 'panel' ? '#ffffff' : undefined,
-            borderColor: type === 'panel' ? '#dddddd' : undefined,
+            backgroundColor: type === 'box' ? '#ffffff' : 
+                        (type === 'panel' ? '#ffffff' : undefined),
+            borderColor: type === 'box' ? '#dddddd' : 
+                        (type === 'panel' ? '#dddddd' : undefined),
+            showX: type === 'box' ? true : undefined,
             headerColor: type === 'panel' ? '#f5f5f5' : undefined,
             isPanel: type === 'panel',
             isBold: false,
@@ -387,6 +394,11 @@ class PrototypingTool {
             img.draggable = false;
             img.alt = 'Uploaded image';
             div.appendChild(img);
+        }
+        else if (element.type === 'box') {
+            div.style.backgroundColor = element.backgroundColor || '#ffffff';
+            div.style.borderColor = element.borderColor || '#dddddd';
+            div.innerHTML = `<div class="box-placeholder ${element.showX ? '' : 'hide-x'}"></div>`;
         }
         else if (element.type === 'sticky') {
             div.style.backgroundColor = element.stickyColor;
@@ -916,6 +928,37 @@ class PrototypingTool {
             `;
         }
 
+        let boxControls = '';
+        if (this.selectedElement.type === 'box') {
+            boxControls = `
+            <div class="property-group">
+                <label class="property-label">Box Style</label>
+                <div class="box-controls">
+                    <div class="color-control">
+                        <label>Background</label>
+                        <input type="color" 
+                            value="${this.selectedElement.backgroundColor || '#ffffff'}"
+                            onchange="tool.updateBoxStyle('backgroundColor', this.value)">
+                    </div>
+                    <div class="color-control">
+                        <label>Border</label>
+                        <input type="color" 
+                            value="${this.selectedElement.borderColor || '#dddddd'}"
+                            onchange="tool.updateBoxStyle('borderColor', this.value)">
+                    </div>
+                    <div class="checkbox-control">
+                        <label>
+                            <input type="checkbox" 
+                                ${this.selectedElement.showX ? 'checked' : ''}
+                                onchange="tool.updateBoxStyle('showX', this.checked)">
+                            Show X Mark
+                        </label>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
         if (this.selectedElement.type === 'sticky') {
             colorControls = `
                 <div class="property-group">
@@ -965,6 +1008,7 @@ class PrototypingTool {
             </div>
             ${colorControls}
             ${textControls}
+            ${boxControls}
             <div class="property-group">
                 <label class="property-label">Layer Position</label>
                 <div class="layer-controls">
@@ -1003,6 +1047,38 @@ class PrototypingTool {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
         }
+    }
+
+    updateBoxStyle(property, value) {
+        if (!this.selectedElement || this.selectedElement.type !== 'box') return;
+        
+        this.selectedElement[property] = value;
+        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        const placeholder = elementDiv.querySelector('.box-placeholder');
+    
+        switch (property) {
+            case 'backgroundColor':
+                elementDiv.style.backgroundColor = value;
+                break;
+            case 'borderColor':
+                elementDiv.style.borderColor = value;
+                break;
+            case 'showX':
+                placeholder.classList.toggle('hide-x', !value);
+                break;
+        }
+        
+        this.saveHistory();
+    }
+
+    updateBoxColor(color) {
+        if (!this.selectedElement || this.selectedElement.type !== 'box') return;
+        
+        this.selectedElement.backgroundColor = color;
+        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        elementDiv.style.backgroundColor = color;
+        
+        this.saveHistory();
     }
 
     updateStickyColor(color) {
