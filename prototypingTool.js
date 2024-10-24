@@ -86,6 +86,44 @@ class PrototypingTool {
                 }
             }
         });
+
+        // 방향키 이동 이벤트 추가
+        document.addEventListener('keydown', (e) => {
+            if (!this.selectedElement) return;
+            
+            // 방향키 처리
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                
+                const moveAmount = e.shiftKey ? 10 : 1; // Shift 키를 누르면 10px씩 이동
+                
+                switch(e.key) {
+                    case 'ArrowUp':
+                        this.selectedElement.y -= moveAmount;
+                        break;
+                    case 'ArrowDown':
+                        this.selectedElement.y += moveAmount;
+                        break;
+                    case 'ArrowLeft':
+                        this.selectedElement.x -= moveAmount;
+                        break;
+                    case 'ArrowRight':
+                        this.selectedElement.x += moveAmount;
+                        break;
+                }
+
+                // DOM 업데이트
+                const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+                elementDiv.style.left = `${this.selectedElement.x}px`;
+                elementDiv.style.top = `${this.selectedElement.y}px`;
+                
+                this.updateProperties();
+                
+                // 연속 이동을 위한 디바운스된 히스토리 저장
+                if (this.saveTimeout) clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(() => this.saveHistory(), 500);
+            }
+        });
     }
 
 
@@ -1577,6 +1615,138 @@ class PrototypingTool {
                 handle.style.display = '';
             });
         }
+    }
+
+    showShortcutGuide() {
+        const modal = document.createElement('div');
+        modal.className = 'shortcut-modal';
+        
+        modal.innerHTML = `
+            <div class="shortcut-content">
+                <button class="shortcut-close" onclick="this.closest('.shortcut-modal').remove()">×</button>
+                <h2 style="margin-bottom: 20px;">Keyboard Shortcuts</h2>
+                
+                <div class="shortcut-section">
+                    <h3>General</h3>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span>Copy</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Ctrl</span>
+                                <span class="key">C</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Paste</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Ctrl</span>
+                                <span class="key">V</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Undo</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Ctrl</span>
+                                <span class="key">Z</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Redo</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Ctrl</span>
+                                <span class="key">Y</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Delete Selected</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Del</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="shortcut-section">
+                    <h3>Text Editing</h3>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span>Bold Text</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Ctrl</span>
+                                <span class="key">B</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Finish Editing</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Enter</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="shortcut-section">
+                    <h3>Moving & Resizing</h3>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span>Move 1px</span>
+                            <div class="shortcut-keys">
+                                <span class="key">↑</span>
+                                <span class="key">↓</span>
+                                <span class="key">←</span>
+                                <span class="key">→</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Move 10px</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Shift</span>
+                                <span class="key">+</span>
+                                <span class="key">↑</span>
+                                <span class="key">↓</span>
+                                <span class="key">←</span>
+                                <span class="key">→</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Free Resize Image <small>(Release aspect ratio)</small></span>
+                            <div class="shortcut-keys">
+                                <span class="key">Shift</span>
+                                <span class="key">+ Drag</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        `;
+    
+        // Mac 사용자를 위한 단축키 수정
+        if (navigator.platform.toUpperCase().indexOf('MAC') >= 0) {
+            modal.querySelectorAll('.key').forEach(key => {
+                if (key.textContent === 'Ctrl') {
+                    key.textContent = '⌘';
+                }
+            });
+        }
+    
+        document.body.appendChild(modal);
+    
+        // 모달 외부 클릭 시 닫기
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    
+        // ESC 키로 닫기
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', handleEsc);
+            }
+        };
+        document.addEventListener('keydown', handleEsc);
     }
 
     // HTML로 내보내기
