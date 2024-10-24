@@ -838,18 +838,13 @@ class PrototypingTool {
     }
 
     selectElement(element) {
-        if (this.selectedElement) {
-            const prevDiv = document.getElementById(`element-${this.selectedElement.id}`);
-            if (prevDiv) prevDiv.classList.remove('selected');
-        }
-
+        this.clearSelection();  // 먼저 이전 선택을 모두 해제
         this.selectedElement = element;
         const div = document.getElementById(`element-${element.id}`);
-        div.classList.add('selected');
-
+        div.classList.add('selected');  // 현재 요소에 'selected' 클래스 추가
         this.updateProperties();
         this.updateLayersList();
-        this.addResizeHandles(div);
+        this.addResizeHandles(div);  // 필요한 경우 리사이즈 핸들 추가
     }
 
     addResizeHandles(elementDiv) {
@@ -1472,13 +1467,10 @@ class PrototypingTool {
     }
 
     clearSelection() {
-        if (this.selectedElement) {
-            const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
-            if (elementDiv) {
-                elementDiv.classList.remove('selected');
-                elementDiv.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
-            }
-        }
+        document.querySelectorAll('.element.selected').forEach((el) => {
+            el.classList.remove('selected');
+            el.querySelectorAll('.resize-handle').forEach(handle => handle.remove());  // 리사이즈 핸들 제거
+        });
         this.selectedElement = null;
         this.updateProperties();
         this.updateLayersList();
