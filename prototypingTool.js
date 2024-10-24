@@ -225,6 +225,7 @@ class PrototypingTool {
             content: type === 'sticky' ? 'Double click to edit memo' : 
                     (type === 'panel' ? '' : type.charAt(0).toUpperCase() + type.slice(1)),
             zIndex: this.maxZIndex,
+            opacity: type === 'sticky' ? 1 : undefined,
             fontSize: type === 'text' ? 16 : undefined,
             // 패널의 기본 색상 설정
             backgroundColor: type === 'box' ? '#ffffff' : 
@@ -398,12 +399,34 @@ class PrototypingTool {
         else if (element.type === 'box') {
             div.style.backgroundColor = element.backgroundColor || '#ffffff';
             div.style.borderColor = element.borderColor || '#dddddd';
-            div.innerHTML = `<div class="box-placeholder ${element.showX ? '' : 'hide-x'}"></div>`;
+            
+            // SVG로 X 표시 생성
+            const placeholder = document.createElement('div');
+            placeholder.className = `box-placeholder ${element.showX ? '' : 'hide-x'}`;
+            
+            placeholder.innerHTML = `
+                <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
+                    <line 
+                        x1="0" y1="0" 
+                        x2="100%" y2="100%" 
+                        stroke="#ddd" 
+                        stroke-width="1"
+                    />
+                    <line 
+                        x1="100%" y1="0" 
+                        x2="0" y2="100%" 
+                        stroke="#ddd" 
+                        stroke-width="1"
+                    />
+                </svg>
+            `;
+            
+            div.appendChild(placeholder);
         }
         else if (element.type === 'sticky') {
             div.style.backgroundColor = element.stickyColor;
             div.innerHTML = `
-                <div class="sticky-content">${element.content}</div>
+                <div class="sticky-content" style="font-size: ${element.fontSize}px">${element.content}</div>
             `;
     
             // 더블클릭으로 편집
@@ -962,7 +985,7 @@ class PrototypingTool {
         if (this.selectedElement.type === 'sticky') {
             colorControls = `
                 <div class="property-group">
-                    <label class="property-label">Sticky Color</label>
+                    <label class="property-label">Sticky Style</label>
                     <div class="sticky-colors">
                         ${this.stickyColors.map(color => `
                             <button 
@@ -971,6 +994,33 @@ class PrototypingTool {
                                 onclick="tool.updateStickyColor('${color}')"
                             ></button>
                         `).join('')}
+                    </div>
+                    <div class="sticky-controls">
+                        <div class="control-group">
+                            <label>Opacity</label>
+                            <input 
+                                type="range" 
+                                min="0.1" 
+                                max="1" 
+                                step="0.1" 
+                                value="${this.selectedElement.opacity}"
+                                onchange="tool.updateStickyStyle('opacity', this.value)"
+                                class="opacity-slider"
+                            >
+                            <span>${Math.round(this.selectedElement.opacity * 100)}%</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Font Size</label>
+                            <input 
+                                type="number" 
+                                min="8" 
+                                max="72" 
+                                value="${this.selectedElement.fontSize}"
+                                onchange="tool.updateStickyStyle('fontSize', this.value)"
+                                class="font-size-input"
+                            >
+                            <span>px</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1049,12 +1099,36 @@ class PrototypingTool {
         }
     }
 
+    updateStickyStyle(property, value) {
+        if (!this.selectedElement || this.selectedElement.type !== 'sticky') return;
+    
+        this.selectedElement[property] = property === 'opacity' ? 
+            parseFloat(value) : 
+            parseInt(value);
+    
+        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        const contentDiv = elementDiv.querySelector('.sticky-content');
+        
+        switch(property) {
+            case 'opacity':
+                elementDiv.style.opacity = value;
+                this.updateProperties(); // 퍼센트 표시 업데이트
+                break;
+            case 'fontSize':
+                contentDiv.style.fontSize = `${value}px`;
+                break;
+        }
+    
+        this.saveHistory();
+    }
+
     updateBoxStyle(property, value) {
         if (!this.selectedElement || this.selectedElement.type !== 'box') return;
         
         this.selectedElement[property] = value;
         const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
         const placeholder = elementDiv.querySelector('.box-placeholder');
+        const lines = elementDiv.querySelectorAll('line');
     
         switch (property) {
             case 'backgroundColor':
@@ -1065,6 +1139,9 @@ class PrototypingTool {
                 break;
             case 'showX':
                 placeholder.classList.toggle('hide-x', !value);
+                break;
+            case 'xColor': // X 표시 색상 변경 옵션 추가
+                lines.forEach(line => line.setAttribute('stroke', value));
                 break;
         }
         
@@ -1117,10 +1194,10 @@ class PrototypingTool {
 
     updateElementProperty(property, value) {
         if (!this.selectedElement) return;
-
+    
         const numValue = property === 'content' ? value : Number(value);
         this.selectedElement[property] = numValue;
-
+    
         const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
         switch(property) {
             case 'x':
@@ -1138,12 +1215,18 @@ class PrototypingTool {
             case 'content':
                 if (this.selectedElement.type === 'input') {
                     elementDiv.querySelector('input').placeholder = value;
+                } else if (this.selectedElement.type === 'panel') {
+                    // 패널의 경우 content 부분만 업데이트
+                    const contentDiv = elementDiv.querySelector('.panel-content');
+                    if (contentDiv) {
+                        contentDiv.textContent = value;
+                    }
                 } else {
                     elementDiv.textContent = value;
                 }
                 break;
         }
-
+    
         this.saveHistory();
         this.updateLayersList();
     }
