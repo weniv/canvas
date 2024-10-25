@@ -375,7 +375,7 @@ class PrototypingTool {
     
         return { x: snappedX, y: snappedY, guides };
     }
-    
+
     // 요소의 스냅 포인트 계산
     getElementSnapPoints(element) {
         const points = [];
@@ -446,25 +446,32 @@ class PrototypingTool {
     showSnapGuides(guides) {
         // 기존 가이드라인 제거
         document.querySelectorAll('.snap-guide').forEach(guide => guide.remove());
-
+    
+        const canvas = document.getElementById('canvas');
+        // 실제 캔버스 크기를 가져옵니다.
+        const canvasWidth = parseInt(canvas.style.width);
+        const canvasHeight = parseInt(canvas.style.height);
+    
         guides.forEach(guide => {
             const guideElement = document.createElement('div');
             guideElement.className = 'snap-guide';
             
             if (guide.type === 'vertical') {
                 guideElement.style.width = '2px';
-                guideElement.style.height = '100%';
+                guideElement.style.height = `${canvasHeight}px`;
+                // position을 실제 캔버스 크기 기준으로 계산
                 guideElement.style.left = `${guide.position}px`;
                 guideElement.style.top = '0';
             } else {
                 guideElement.style.height = '2px';
-                guideElement.style.width = '100%';
+                guideElement.style.width = `${canvasWidth}px`;
                 guideElement.style.left = '0';
+                // position을 실제 캔버스 크기 기준으로 계산
                 guideElement.style.top = `${guide.position}px`;
             }
-
-            document.getElementById('canvas').appendChild(guideElement);
-
+    
+            canvas.appendChild(guideElement);
+    
             // 1초 후 가이드라인 제거
             setTimeout(() => guideElement.remove(), 1000);
         });
@@ -1132,84 +1139,68 @@ class PrototypingTool {
 
     handleResize(e) {
         if (!this.resizingElement) return;
-    
-        const dx = e.clientX - this.startPos.x;
-        const dy = e.clientY - this.startPos.y;
+
+        // 마우스 이동 거리를 scale로 나누어 실제 이동 거리 계산
+        const dx = (e.clientX - this.startPos.x) / this.scale;
+        const dy = (e.clientY - this.startPos.y) / this.scale;
         
         const canvas = document.getElementById('canvas');
         const canvasRect = canvas.getBoundingClientRect();
         const guides = [];
-    
-        // 리사이즈 방향에 따른 계산 매핑
-        const resizeCalculations = {
-            e: { 
-                width: Math.max(50, this.startSize.width + dx),
-                snapCondition: (newX, newWidth) => Math.abs(newX + newWidth - canvasRect.width) < this.snapThreshold,
-                snapWidth: (newX) => canvasRect.width - newX,
-                guide: { type: 'vertical', position: canvasRect.width }
-            },
-            w: {
-                width: Math.max(50, this.startSize.width - dx),
-                x: this.startSize.x + (this.startSize.width - Math.max(50, this.startSize.width - dx)),
-                snapCondition: (newX) => Math.abs(newX) < this.snapThreshold,
-                snapX: () => 0,
-                snapWidth: (newX) => this.startSize.x + this.startSize.width,
-                guide: { type: 'vertical', position: 0 }
-            },
-            s: {
-                height: Math.max(30, this.startSize.height + dy),
-                snapCondition: (newY, newHeight) => Math.abs(newY + newHeight - canvasRect.height) < this.snapThreshold,
-                snapHeight: (newY) => canvasRect.height - newY,
-                guide: { type: 'horizontal', position: canvasRect.height }
-            },
-            n: {
-                height: Math.max(30, this.startSize.height - dy),
-                y: this.startSize.y + (this.startSize.height - Math.max(30, this.startSize.height - dy)),
-                snapCondition: (newY) => Math.abs(newY) < this.snapThreshold,
-                snapY: () => 0,
-                snapHeight: (newY) => this.startSize.y + this.startSize.height,
-                guide: { type: 'horizontal', position: 0 }
-            }
-        };
-    
+
         // 초기 값 설정
         let newWidth = this.startSize.width;
         let newHeight = this.startSize.height;
         let newX = this.startSize.x;
         let newY = this.startSize.y;
-    
+
         // 리사이즈 핸들 방향 분해
         const directions = this.resizeHandle.split('');
         
         // 각 방향별로 계산 수행
         directions.forEach(direction => {
-            const calc = resizeCalculations[direction];
-            if (!calc) return;
-    
-            // 너비/높이 업데이트
-            if ('width' in calc) {
-                newWidth = calc.width;
-                if ('x' in calc) newX = calc.x;
-                
-                if (calc.snapCondition(newX, newWidth)) {
-                    if (calc.snapWidth) newWidth = calc.snapWidth(newX);
-                    if (calc.snapX) newX = calc.snapX();
-                    guides.push(calc.guide);
-                }
-            }
-            
-            if ('height' in calc) {
-                newHeight = calc.height;
-                if ('y' in calc) newY = calc.y;
-                
-                if (calc.snapCondition(newY, newHeight)) {
-                    if (calc.snapHeight) newHeight = calc.snapHeight(newY);
-                    if (calc.snapY) newY = calc.snapY();
-                    guides.push(calc.guide);
-                }
+            switch(direction) {
+                case 'e':
+                    newWidth = Math.max(50, this.startSize.width + dx);
+                    if (this.snapEnabled && Math.abs(newX + newWidth - canvasRect.width/this.scale) < this.snapThreshold) {
+                        newWidth = canvasRect.width/this.scale - newX;
+                        guides.push({ type: 'vertical', position: canvasRect.width });
+                    }
+                    break;
+                case 'w':
+                    const newWidthW = Math.max(50, this.startSize.width - dx);
+                    const possibleX = this.startSize.x + (this.startSize.width - newWidthW);
+                    if (this.snapEnabled && Math.abs(possibleX) < this.snapThreshold) {
+                        newX = 0;
+                        newWidth = this.startSize.x + this.startSize.width;
+                        guides.push({ type: 'vertical', position: 0 });
+                    } else {
+                        newX = possibleX;
+                        newWidth = newWidthW;
+                    }
+                    break;
+                case 's':
+                    newHeight = Math.max(30, this.startSize.height + dy);
+                    if (this.snapEnabled && Math.abs(newY + newHeight - canvasRect.height/this.scale) < this.snapThreshold) {
+                        newHeight = canvasRect.height/this.scale - newY;
+                        guides.push({ type: 'horizontal', position: canvasRect.height });
+                    }
+                    break;
+                case 'n':
+                    const newHeightN = Math.max(30, this.startSize.height - dy);
+                    const possibleY = this.startSize.y + (this.startSize.height - newHeightN);
+                    if (this.snapEnabled && Math.abs(possibleY) < this.snapThreshold) {
+                        newY = 0;
+                        newHeight = this.startSize.y + this.startSize.height;
+                        guides.push({ type: 'horizontal', position: 0 });
+                    } else {
+                        newY = possibleY;
+                        newHeight = newHeightN;
+                    }
+                    break;
             }
         });
-    
+
         // 이미지 비율 유지 처리
         if (this.resizingElement.type === 'image' && this.resizingElement.aspectRatio && !e.shiftKey) {
             if (directions.some(d => ['e', 'w'].includes(d))) {
@@ -1218,26 +1209,22 @@ class PrototypingTool {
                 newWidth = newHeight * this.resizingElement.aspectRatio;
             }
         }
-    
+
         // 그리드 스냅 처리
         if (this.gridSize > 0) {
-            const roundToGrid = value => Math.round(value / this.gridSize) * this.gridSize;
-            newWidth = roundToGrid(newWidth);
-            newHeight = roundToGrid(newHeight);
-            newX = roundToGrid(newX);
-            newY = roundToGrid(newY);
+            newWidth = Math.round(newWidth / this.gridSize) * this.gridSize;
+            newHeight = Math.round(newHeight / this.gridSize) * this.gridSize;
+            newX = Math.round(newX / this.gridSize) * this.gridSize;
+            newY = Math.round(newY / this.gridSize) * this.gridSize;
         }
-    
+
         // 요소 업데이트
-        const updates = {
+        Object.assign(this.resizingElement, {
             width: newWidth,
             height: newHeight,
             x: newX,
             y: newY
-        };
-    
-        // 요소와 DOM 업데이트
-        Object.assign(this.resizingElement, updates);
+        });
         
         const elementDiv = document.getElementById(`element-${this.resizingElement.id}`);
         Object.assign(elementDiv.style, {
@@ -1246,8 +1233,7 @@ class PrototypingTool {
             left: `${newX}px`,
             top: `${newY}px`
         });
-    
-        // 가이드라인과 속성 업데이트
+
         this.showSnapGuides(guides);
         this.updateProperties();
     }

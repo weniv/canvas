@@ -328,6 +328,7 @@ h2 {
     pointer-events: none;
     opacity: 0;
     z-index: 9999;
+    will-change: transform; /* 성능 최적화 */
     animation: snapGuideAppear 1s ease-out;
 }
 
