@@ -539,10 +539,10 @@ h2 {
 }
 
 .element.box {
+    position: absolute;
     background: white;
     border: 1px solid #ddd;
     padding: 0;
-    position: relative;
     overflow: visible;
     /* overflow: hidden; */
 }

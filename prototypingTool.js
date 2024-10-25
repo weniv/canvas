@@ -64,7 +64,7 @@ class PrototypingTool {
             'custom': { width: null, height: null }
         };
         this.currentDevice = 'desktop';
-        this.snapThreshold = 5; // 스냅이 작동할 거리 (픽셀)
+        this.snapThreshold = 9; // 스냅이 작동할 거리 (픽셀)
         this.snapEnabled = true; // 스냅 기능 활성화 여부
     
         this.loremText = "Lorem ipsum dolor sit amet..."; // 생략
