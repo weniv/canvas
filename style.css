@@ -65,19 +65,33 @@ body {
 
 .canvas-area {
     flex: 1;
-    background: #fff;
-    position: relative;
+    background: #e0e0e0;
     overflow: auto;
+    position: relative;
+    cursor: default;
 }
 
 .canvas {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    background: 
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    transform-origin: 0 0;
+    transition: width 0.3s, height 0.3s;
+    background-image: 
         linear-gradient(90deg, transparent calc(100% - 1px), #f0f0f0 calc(100% - 1px)),
         linear-gradient(0deg, transparent calc(100% - 1px), #f0f0f0 calc(100% - 1px));
     background-size: 20px 20px;
+}
+
+/* 패닝 중일 때의 커서 스타일 */
+.canvas-area.panning {
+    cursor: grab;
+}
+
+.canvas-area.panning:active {
+    cursor: grabbing;
 }
 
 .properties-panel {
@@ -183,33 +197,6 @@ body {
 
 h2 {
     margin-bottom: 16px;
-}
-
-.canvas-area {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #e0e0e0;  /* 캔버스 외부 배경색 */
-    overflow: hidden;
-    position: relative;
-    cursor: default;
-}
-
-.canvas {
-    position: absolute;
-    background-color: white;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    transition: width 0.3s, height 0.3s;
-    transform-origin: 0 0;
-}
-
-/* 패닝 중일 때의 커서 스타일 */
-.canvas-area.panning {
-    cursor: grab;
-}
-
-.canvas-area.panning:active {
-    cursor: grabbing;
 }
 
 .layer-controls {
