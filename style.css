@@ -435,7 +435,6 @@ h2 {
 .element.image {
     /* overflow: hidden; */
     background: #fff;
-    border: 1px solid #ddd;
     padding: 0;
 }
 
@@ -512,7 +511,7 @@ h2 {
     border: 1px solid #ddd;
     padding: 0;
     position: relative;
-    /* overflow: hidden; */
+    overflow: visible;
 }
 
 .box-placeholder {
@@ -521,15 +520,23 @@ h2 {
     position: relative;
 }
 
-.box-placeholder::before,
-.box-placeholder::after {
+.box-placeholder svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.box-placeholder.hide-x svg {
     display: none;
 }
 
-/* .box-placeholder.hide-x::before,
-.box-placeholder.hide-x::after {
-    opacity: 0;
-} */
+/* X 표시 라인 스타일 */
+.box-placeholder svg line {
+    transition: stroke 0.3s ease;
+}
 
 .checkbox-control {
     margin-top: 8px;

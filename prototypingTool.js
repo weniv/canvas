@@ -1408,12 +1408,20 @@ class PrototypingTool {
     }
     
     createColorControl(label, value, property) {
+        const handlers = {
+            panel: 'updatePanelColor',
+            box: 'updateBoxStyle'
+        };
+    
+        // 현재 선택된 요소의 타입에 따라 적절한 핸들러 선택
+        const handler = handlers[this.selectedElement.type] || 'updateElementProperty';
+        
         return `
             <div class="color-control">
                 <label>${label}</label>
                 <input type="color" 
                     value="${value || '#ffffff'}"
-                    onchange="tool.updatePanelColor('${property}', this.value)">
+                    onchange="tool.${handler}('${property}', this.value)">
             </div>
         `;
     }
@@ -1560,23 +1568,30 @@ class PrototypingTool {
     updateBoxStyle(property, value) {
         if (!this.selectedElement || this.selectedElement.type !== 'box') return;
         
+        // 요소의 속성 업데이트
         this.selectedElement[property] = value;
+        
+        // DOM 요소 찾기
         const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
-        const placeholder = elementDiv.querySelector('.box-placeholder');
-        const lines = elementDiv.querySelectorAll('line');
-    
+        
+        // 속성별 처리
         switch (property) {
             case 'backgroundColor':
                 elementDiv.style.backgroundColor = value;
                 break;
+                
             case 'borderColor':
                 elementDiv.style.borderColor = value;
-                break;
-            case 'showX':
-                placeholder.classList.toggle('hide-x', !value);
-                break;
-            case 'xColor': // X 표시 색상 변경 옵션 추가
+                // X 표시의 색상도 함께 업데이트
+                const lines = elementDiv.querySelectorAll('line');
                 lines.forEach(line => line.setAttribute('stroke', value));
+                break;
+                
+            case 'showX':
+                const placeholder = elementDiv.querySelector('.box-placeholder');
+                if (placeholder) {
+                    placeholder.classList.toggle('hide-x', !value);
+                }
                 break;
         }
         
