@@ -156,12 +156,15 @@ class PrototypingTool {
                 const delta = e.deltaY > 0 ? 0.9 : 1.1;
                 this.zoom(delta, e.clientX, e.clientY);
             }
-        }, { passive: false });  // passive: false를 추가하여 preventDefault가 작동하도록 함
+        }, { passive: false });
     
         // 스페이스바 패닝
         let isSpacePressed = false;
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && !isSpacePressed) {
+            // 편집 가능한 요소에 포커스가 있을 때는 스페이스바 이벤트를 무시
+            if (e.code === 'Space' && !isSpacePressed && 
+                !(['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || 
+                  document.activeElement.contentEditable === 'true')) {
                 e.preventDefault();
                 isSpacePressed = true;
                 canvasArea.classList.add('panning');
@@ -171,7 +174,7 @@ class PrototypingTool {
         });
     
         document.addEventListener('keyup', (e) => {
-            if (e.code === 'Space') {
+            if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
                 e.preventDefault();
                 isSpacePressed = false;
                 canvasArea.classList.remove('panning');
