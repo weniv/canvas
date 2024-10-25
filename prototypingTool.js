@@ -2057,9 +2057,29 @@ class PrototypingTool {
         
         modal.innerHTML = `
             <div class="shortcut-content">
-                <button class="shortcut-close" onclick="this.closest('.shortcut-modal').remove()">×</button>
+                <button class="shortcut-close" onclick="this.closest('.shortcut-modal').remove()">x</button>
                 <h2 style="margin-bottom: 20px;">Keyboard Shortcuts</h2>
                 
+                <div class="shortcut-section">
+                    <h3>Navigation</h3>
+                    <div class="shortcut-list">
+                        <div class="shortcut-item">
+                            <span>Pan Canvas</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Space</span>
+                                <span>+ Drag</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Zoom In/Out</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Ctrl</span>
+                                <span>+ Scroll</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
                 <div class="shortcut-section">
                     <h3>General</h3>
                     <div class="shortcut-list">
@@ -2097,6 +2117,12 @@ class PrototypingTool {
                                 <span class="key">Del</span>
                             </div>
                         </div>
+                        <div class="shortcut-item">
+                            <span>Finish Editing Text</span>
+                            <div class="shortcut-keys">
+                                <span class="key">Enter</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
     
@@ -2111,8 +2137,9 @@ class PrototypingTool {
                             </div>
                         </div>
                         <div class="shortcut-item">
-                            <span>Finish Editing</span>
+                            <span>Multi-line Text</span>
                             <div class="shortcut-keys">
+                                <span class="key">Shift</span>
                                 <span class="key">Enter</span>
                             </div>
                         </div>
@@ -2151,27 +2178,35 @@ class PrototypingTool {
                         </div>
                     </div>
                 </div>
-
+    
                 <div class="shortcut-section">
-                    <h3>lorem ipsum</h3>
+                    <h3>Quick Text</h3>
                     <div class="shortcut-list">
                         <div class="shortcut-item">
-                            <span>lorem</span>
+                            <span>Medium Lorem Ipsum</span>
                             <div class="shortcut-keys">
                                 <span class="key">lorem</span>
                             </div>
                         </div>
                         <div class="shortcut-item">
-                            <span>lorem</span>
+                            <span>Short/Medium/Long Lorem</span>
                             <div class="shortcut-keys">
-                                <span class="key">1lorem, .lorem</span>
-                                <span class="key">2lorem, ..lorem</span>
-                                <span class="key">3lorem, ...lorem</span>
+                                <span class="key">1lorem</span>
+                                <span class="key">2lorem</span>
+                                <span class="key">3lorem</span>
+                            </div>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Alternative Short/Medium/Long</span>
+                            <div class="shortcut-keys">
+                                <span class="key">.lorem</span>
+                                <span class="key">..lorem</span>
+                                <span class="key">...lorem</span>
                             </div>
                         </div>
                     </div>
                 </div>
-
+    
             </div>
         `;
     
