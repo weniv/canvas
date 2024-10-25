@@ -25,6 +25,11 @@ class PrototypingTool {
         this.pages = new Map(); // 페이지 저장소
         this.currentPageId = null; // 현재 페이지 ID
 
+        this.scale = 1;  // 줌 레벨
+        this.isPanning = false;  // 패닝 중인지 여부
+        this.lastPanPosition = { x: 0, y: 0 };  // 마지막 패닝 위치
+        this.canvasOffset = { x: 0, y: 0 };  // 캔버스 오프셋
+
         this.devicePresets = {
             'desktop': { width: 1920, height: 1080 },
             'laptop': { width: 1366, height: 768 },
@@ -149,6 +154,124 @@ class PrototypingTool {
                 this.saveTimeout = setTimeout(() => this.saveHistory(), 500);
             }
         });
+        // 줌과 패닝 이벤트 리스너들을 다른 이벤트 리스너들과 분리
+        this.initializeZoomAndPan();
+    }
+
+    initializeZoomAndPan() {
+        const canvasArea = document.querySelector('.canvas-area');
+    
+        // 줌 이벤트
+        canvasArea.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                this.zoom(delta, e.clientX, e.clientY);
+            }
+        }, { passive: false });  // passive: false를 추가하여 preventDefault가 작동하도록 함
+    
+        // 스페이스바 패닝
+        let isSpacePressed = false;
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !isSpacePressed) {
+                e.preventDefault();
+                isSpacePressed = true;
+                canvasArea.classList.add('panning');
+                document.body.style.cursor = 'grab';
+                this.isPanning = true;
+            }
+        });
+    
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                isSpacePressed = false;
+                canvasArea.classList.remove('panning');
+                document.body.style.cursor = 'default';
+                this.isPanning = false;
+            }
+        });
+    
+        // 패닝 마우스 이벤트
+        let isPanningActive = false;
+        canvasArea.addEventListener('mousedown', (e) => {
+            if (this.isPanning) {
+                e.preventDefault();
+                isPanningActive = true;
+                canvasArea.classList.add('panning');
+                document.body.style.cursor = 'grabbing';
+                this.lastPanPosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+    
+        canvasArea.addEventListener('mousemove', (e) => {
+            if (isPanningActive && this.isPanning) {
+                const dx = e.clientX - this.lastPanPosition.x;
+                const dy = e.clientY - this.lastPanPosition.y;
+    
+                this.canvasOffset.x += dx;
+                this.canvasOffset.y += dy;
+    
+                this.lastPanPosition = { x: e.clientX, y: e.clientY };
+                this.updateCanvasTransform();
+            }
+        });
+    
+        document.addEventListener('mouseup', () => {
+            if (isPanningActive) {
+                isPanningActive = false;
+                if (this.isPanning) {
+                    document.body.style.cursor = 'grab';
+                }
+            }
+        });
+    }
+
+    zoom(delta, clientX, clientY) {
+        const canvasArea = document.querySelector('.canvas-area');
+        const canvas = document.getElementById('canvas');
+        const rect = canvasArea.getBoundingClientRect();
+    
+        // 마우스 위치를 기준으로 줌
+        const mouseX = clientX - rect.left;
+        const mouseY = clientY - rect.top;
+    
+        const newScale = Math.min(Math.max(this.scale * delta, 0.1), 3); // 0.1배에서 3배까지 제한
+        
+        if (newScale !== this.scale) {
+            const scaleChange = newScale / this.scale;
+            
+            // 마우스 포인터 위치 기준으로 offset 조정
+            this.canvasOffset.x = mouseX - (mouseX - this.canvasOffset.x) * scaleChange;
+            this.canvasOffset.y = mouseY - (mouseY - this.canvasOffset.y) * scaleChange;
+            
+            this.scale = newScale;
+            this.updateCanvasTransform();
+        }
+    }
+
+    resetZoom() {
+        this.scale = 1;
+        this.canvasOffset = { x: 0, y: 0 };
+        this.updateCanvasTransform();
+    }
+    
+    handlePan = (e) => {
+        const dx = e.clientX - this.lastPanPosition.x;
+        const dy = e.clientY - this.lastPanPosition.y;
+    
+        this.canvasOffset.x += dx;
+        this.canvasOffset.y += dy;
+    
+        this.lastPanPosition = { x: e.clientX, y: e.clientY };
+        this.updateCanvasTransform();
+    }
+    
+    updateCanvasTransform() {
+        const canvas = document.getElementById('canvas');
+        canvas.style.transform = `translate(${this.canvasOffset.x}px, ${this.canvasOffset.y}px) scale(${this.scale})`;
+        canvas.style.transformOrigin = '0 0';
     }
 
 

@@ -190,12 +190,26 @@ h2 {
     justify-content: center;
     align-items: center;
     background: #e0e0e0;  /* 캔버스 외부 배경색 */
+    overflow: hidden;
+    position: relative;
+    cursor: default;
 }
 
 .canvas {
+    position: absolute;
     background-color: white;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
     transition: width 0.3s, height 0.3s;
+    transform-origin: 0 0;
+}
+
+/* 패닝 중일 때의 커서 스타일 */
+.canvas-area.panning {
+    cursor: grab;
+}
+
+.canvas-area.panning:active {
+    cursor: grabbing;
 }
 
 .layer-controls {
