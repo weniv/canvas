@@ -190,12 +190,18 @@ class PrototypingTool {
     
         // 스페이스바 패닝
         let isSpacePressed = false;
+        
+        // 전체 document에 대한 스페이스바 기본 동작 방지
         document.addEventListener('keydown', (e) => {
-            // 편집 가능한 요소에 포커스가 있을 때는 스페이스바 이벤트를 무시
+            if (e.code === 'Space') {
+                e.preventDefault(); // 모든 스페이스바 기본 동작 방지
+            }
+        });
+    
+        document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !isSpacePressed && 
                 !(['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || 
                   document.activeElement.contentEditable === 'true')) {
-                e.preventDefault();
                 isSpacePressed = true;
                 canvasArea.classList.add('panning');
                 document.body.style.cursor = 'grab';
@@ -204,8 +210,7 @@ class PrototypingTool {
         });
     
         document.addEventListener('keyup', (e) => {
-            if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
-                e.preventDefault();
+            if (e.code === 'Space') {
                 isSpacePressed = false;
                 canvasArea.classList.remove('panning');
                 document.body.style.cursor = 'default';
@@ -1004,11 +1009,15 @@ class PrototypingTool {
     startDragging(e, element) {
         this.draggedElement = element;
         const rect = document.getElementById(`element-${element.id}`).getBoundingClientRect();
+        const canvas = document.getElementById('canvas');
+        const canvasRect = canvas.getBoundingClientRect();
+        
+        // 캔버스의 transform을 고려한 offset 계산
         this.offset = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+            x: ((e.clientX - canvasRect.left - this.canvasOffset.x) / this.scale) - element.x,
+            y: ((e.clientY - canvasRect.top - this.canvasOffset.y) / this.scale) - element.y
         };
-
+    
         const moveHandler = (e) => this.handleDrag(e);
         const upHandler = () => {
             document.removeEventListener('mousemove', moveHandler);
@@ -1016,26 +1025,27 @@ class PrototypingTool {
             this.draggedElement = null;
             this.saveHistory();
         };
-
+    
         document.addEventListener('mousemove', moveHandler);
         document.addEventListener('mouseup', upHandler);
     }
 
     handleDrag(e) {
         if (!this.draggedElement) return;
-
+    
         const canvas = document.getElementById('canvas');
         const rect = canvas.getBoundingClientRect();
         
-        let x = e.clientX - rect.left - this.offset.x;
-        let y = e.clientY - rect.top - this.offset.y;
-
+        // 캔버스의 transform을 고려한 마우스 위치 계산
+        let x = (e.clientX - rect.left - this.canvasOffset.x) / this.scale - this.offset.x;
+        let y = (e.clientY - rect.top - this.canvasOffset.y) / this.scale - this.offset.y;
+    
         // 그리드 스냅 (기존 기능 유지)
         if (this.gridSize > 0) {
             x = Math.round(x / this.gridSize) * this.gridSize;
             y = Math.round(y / this.gridSize) * this.gridSize;
         }
-
+    
         // 경계선 스냅
         if (this.snapEnabled) {
             const snapResult = this.calculateSnap(
@@ -1050,15 +1060,15 @@ class PrototypingTool {
             // 가이드라인 표시
             this.showSnapGuides(snapResult.guides);
         }
-
+    
         // 요소 위치 업데이트
         this.draggedElement.x = Math.max(0, x);
         this.draggedElement.y = Math.max(0, y);
-
+    
         const elementDiv = document.getElementById(`element-${this.draggedElement.id}`);
         elementDiv.style.left = `${this.draggedElement.x}px`;
         elementDiv.style.top = `${this.draggedElement.y}px`;
-
+    
         this.updateProperties();
     }
 
