@@ -640,6 +640,12 @@ class PrototypingTool {
         }
         else if (element.type === 'button') {
             div.textContent = element.content;
+        
+            // 더블클릭 이벤트 추가
+            div.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                this.startEditingButton(element);
+            });
         }
         else if (element.type === 'input') {
             div.innerHTML = `<input type="text" placeholder="${element.content}" style="width:100%;height:100%;border:none;padding:4px;">`;
@@ -742,6 +748,52 @@ class PrototypingTool {
             this.saveHistory();
         };
 
+        editableDiv.addEventListener('blur', finishEditing);
+        
+        editableDiv.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                editableDiv.blur();
+            }
+        });
+    }
+
+    startEditingButton(element) {
+        const elementDiv = document.getElementById(`element-${element.id}`);
+        const currentText = element.content;
+        
+        elementDiv.innerHTML = '';
+        const editableDiv = document.createElement('div');
+        editableDiv.contentEditable = true;
+        editableDiv.className = 'editable-text';
+        editableDiv.textContent = currentText;
+        editableDiv.style.width = '100%';
+        editableDiv.style.height = '100%';
+        editableDiv.style.display = 'flex';
+        editableDiv.style.alignItems = 'center';
+        editableDiv.style.justifyContent = 'center';
+        editableDiv.style.outline = 'none';
+        editableDiv.style.color = 'white';  // 버튼 텍스트 색상 유지
+        editableDiv.style.cursor = 'text';
+        
+        elementDiv.appendChild(editableDiv);
+        
+        // 텍스트 선택
+        const range = document.createRange();
+        range.selectNodeContents(editableDiv);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        editableDiv.focus();
+    
+        const finishEditing = () => {
+            const newText = editableDiv.textContent;
+            element.content = newText;
+            elementDiv.textContent = newText;
+            this.saveHistory();
+        };
+    
         editableDiv.addEventListener('blur', finishEditing);
         
         editableDiv.addEventListener('keydown', (e) => {
@@ -1238,21 +1290,27 @@ class PrototypingTool {
                                 onclick="tool.updateTextAlign('start')"
                                 title="Align Left"
                             >
-                                ⇤
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
+                                </svg>
                             </button>
                             <button 
                                 class="style-button ${this.selectedElement.textAlign === 'center' ? 'active' : ''}"
                                 onclick="tool.updateTextAlign('center')"
                                 title="Align Center"
                             >
-                                ⇔
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                                </svg>
                             </button>
                             <button 
                                 class="style-button ${this.selectedElement.textAlign === 'right' ? 'active' : ''}"
                                 onclick="tool.updateTextAlign('end')"
                                 title="Align Right"
                             >
-                                ⇥
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
+                                </svg>
                             </button>
                         </div>
                     </div>
