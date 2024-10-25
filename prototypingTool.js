@@ -15,6 +15,31 @@ class PrototypingTool {
             width: 200,
             height: 150
         };
+        // 아이콘 추가 필요
+        this.icons = {
+            'arrow-right': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M26.0607 6.93934C26.6464 7.52513 26.6464 8.47487 26.0607 9.06066L15.1213 20L26.0607 30.9393C26.6464 31.5251 26.6464 32.4749 26.0607 33.0607C25.4749 33.6464 24.5251 33.6464 23.9393 33.0607L11.9393 21.0607C11.3536 20.4749 11.3536 19.5251 11.9393 18.9393L23.9393 6.93934C24.5251 6.35355 25.4749 6.35355 26.0607 6.93934Z" fill="currentColor"/></svg>`,
+            'arrow-left': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.9393 33.0607C13.3536 32.4749 13.3536 31.5251 13.9393 30.9393L24.8787 20L13.9393 9.06066C13.3536 8.47488 13.3536 7.52513 13.9393 6.93934C14.5251 6.35355 15.4749 6.35355 16.0607 6.93934L28.0607 18.9393C28.6464 19.5251 28.6464 20.4749 28.0607 21.0607L16.0607 33.0607C15.4749 33.6464 14.5251 33.6464 13.9393 33.0607Z" fill="currentColor"/></svg>`,
+            'close': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.0607 8.93934C10.4749 8.35355 9.52513 8.35355 8.93934 8.93934C8.35355 9.52513 8.35355 10.4749 8.93934 11.0607L17.8787 20L8.93934 28.9393C8.35355 29.5251 8.35355 30.4749 8.93934 31.0607C9.52513 31.6464 10.4749 31.6464 11.0607 31.0607L20 22.1213L28.7383 30.8596C29.3241 31.4454 30.2739 31.4454 30.8596 30.8596C31.4454 30.2739 31.4454 29.3241 30.8596 28.7383L22.1213 20L30.8596 11.2617C31.4454 10.6759 31.4454 9.72614 30.8596 9.14035C30.2739 8.55456 29.3241 8.55457 28.7383 9.14035L20 17.8787L11.0607 8.93934Z" fill="currentColor"/></svg>`,
+            'menu': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.5 20C2.5 19.1716 3.17157 18.5 4 18.5H36C36.8284 18.5 37.5 19.1716 37.5 20C37.5 20.8284 36.8284 21.5 36 21.5H4C3.17157 21.5 2.5 20.8284 2.5 20Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.5 10C2.5 9.17157 3.17157 8.5 4 8.5H36C36.8284 8.5 37.5 9.17157 37.5 10C37.5 10.8284 36.8284 11.5 36 11.5H4C3.17157 11.5 2.5 10.8284 2.5 10Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M2.5 30C2.5 29.1716 3.17157 28.5 4 28.5H36C36.8284 28.5 37.5 29.1716 37.5 30C37.5 30.8284 36.8284 31.5 36 31.5H4C3.17157 31.5 2.5 30.8284 2.5 30Z" fill="currentColor"/></svg>`,
+            'arrow-back': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M33.5 20C33.5 20.8284 32.8284 21.5 32 21.5H11.8799L20.009 28.8901C20.622 29.4474 20.6672 30.396 20.1099 31.009C19.5526 31.622 18.604 31.6672 17.991 31.1099L6.99099 21.1099C6.67828 20.8256 6.5 20.4226 6.5 20C6.5 19.5774 6.67828 19.1744 6.99099 18.8901L17.991 8.8901C18.604 8.33284 19.5526 8.37801 20.1099 8.991C20.6672 9.60399 20.622 10.5527 20.009 11.1099L11.8799 18.5H32C32.8284 18.5 33.5 19.1716 33.5 20Z" fill="currentColor"/></svg>`,
+            'arrow-forward': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.5 20C6.5 19.1716 7.17157 18.5 8 18.5H28.1201L19.991 11.1099C19.378 10.5527 19.3328 9.604 19.8901 8.99101C20.4473 8.37802 21.396 8.33285 22.009 8.89011L33.009 18.8901C33.3217 19.1744 33.5 19.5774 33.5 20C33.5 20.4226 33.3217 20.8256 33.009 21.1099L22.009 31.1099C21.396 31.6672 20.4474 31.622 19.8901 31.009C19.3328 30.396 19.378 29.4474 19.991 28.8901L28.1201 21.5H8C7.17157 21.5 6.5 20.8284 6.5 20Z" fill="currentColor"/></svg>`,
+            'arrow-up': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6.5C20.4411 6.5 20.8377 6.69041 21.1122 6.99351L31.1099 17.991C31.6672 18.604 31.622 19.5526 31.009 20.1099C30.396 20.6672 29.4474 20.622 28.8901 20.009L21.5 11.8799V32C21.5 32.8284 20.8284 33.5 20 33.5C19.1716 33.5 18.5 32.8284 18.5 32V11.8799L11.1099 20.009C10.5527 20.622 9.60399 20.6672 8.991 20.1099C8.37802 19.5526 8.33284 18.604 8.8901 17.991L18.8848 6.99684C19.1594 6.6918 19.5573 6.5 20 6.5Z" fill="currentColor"/></svg>`,
+            'arrow-down': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 6.5C20.8284 6.5 21.5 7.17157 21.5 8V28.1201L28.8901 19.991C29.4474 19.378 30.396 19.3328 31.009 19.8901C31.622 20.4473 31.6672 21.396 31.1099 22.009L21.1099 33.009C20.8256 33.3217 20.4226 33.5 20 33.5C19.5774 33.5 19.1744 33.3217 18.8901 33.009L8.8901 22.009C8.33284 21.396 8.37801 20.4474 8.991 19.8901C9.60399 19.3328 10.5527 19.378 11.1099 19.991L18.5 28.1201V8C18.5 7.17157 19.1716 6.5 20 6.5Z" fill="currentColor"/></svg>`,
+            'heart-outline': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M27.578 9.5C25.7586 9.5 22.9997 10.3073 21.3207 13.4249C21.059 13.9107 20.5518 14.2136 20 14.2136C19.4482 14.2136 18.941 13.9107 18.6793 13.4249C17.0005 10.3075 14.2415 9.50077 12.4218 9.50077C10.553 9.50077 8.78036 10.1933 7.48911 11.3962C6.2916 12.5117 5.5 14.5312 5.5 16.7746C5.5 20.6316 8.08172 27.3616 20 32.3769C31.9186 27.3615 34.5 20.6313 34.5 16.7741C34.5 14.5306 33.7084 12.511 32.5108 11.3955C31.2195 10.1925 29.4468 9.5 27.578 9.5ZM20 10.0515C22.3098 7.31893 25.384 6.5 27.578 6.5C30.1765 6.5 32.6881 7.46061 34.5557 9.20033C36.517 11.0274 37.5 13.9359 37.5 16.7741C37.5 22.2364 33.7639 30.0276 20.5646 35.3897C20.2026 35.5368 19.7975 35.5368 19.4354 35.3897C6.23646 30.0278 2.5 22.2368 2.5 16.7746C2.5 13.9365 3.48299 11.028 5.44425 9.20103C7.31178 7.46135 9.82332 6.50077 12.4218 6.50077C14.6155 6.50077 17.69 7.31901 20 10.0515Z" fill="currentColor"/></svg>`,
+            'heart-fill': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M27.578 6.5C25.384 6.5 22.3098 7.31893 20 10.0515C17.69 7.31901 14.6155 6.50077 12.4218 6.50077C9.82332 6.50077 7.31178 7.46135 5.44425 9.20103C3.48299 11.028 2.5 13.9365 2.5 16.7746C2.5 22.2368 6.23646 30.0278 19.4354 35.3897C19.7975 35.5368 20.2026 35.5368 20.5646 35.3897C33.7639 30.0276 37.5 22.2364 37.5 16.7741C37.5 13.9359 36.517 11.0274 34.5557 9.20033C32.6881 7.46061 30.1765 6.5 27.578 6.5Z" fill="currentColor"/></svg>`,
+            'image': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.5 12C2.5 6.75329 6.75329 2.5 12 2.5H28C33.2467 2.5 37.5 6.75329 37.5 12V28C37.5 33.2467 33.2467 37.5 28 37.5H12C6.75329 37.5 2.5 33.2467 2.5 28V12ZM12 5.5C8.41015 5.5 5.5 8.41015 5.5 12V28C5.5 31.5899 8.41015 34.5 12 34.5H28C31.5899 34.5 34.5 31.5899 34.5 28V12C34.5 8.41015 31.5899 5.5 28 5.5H12Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M13.5 11.5C12.3954 11.5 11.5 12.3954 11.5 13.5C11.5 14.6046 12.3954 15.5 13.5 15.5C14.6046 15.5 15.5 14.6046 15.5 13.5C15.5 12.3954 14.6046 11.5 13.5 11.5ZM8.5 13.5C8.5 10.7386 10.7386 8.5 13.5 8.5C16.2614 8.5 18.5 10.7386 18.5 13.5C18.5 16.2614 16.2614 18.5 13.5 18.5C10.7386 18.5 8.5 16.2614 8.5 13.5Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M30.033 20.9425C29.0162 19.6715 27.0753 19.6956 26.0905 20.9915L21.9032 26.5011C20.1827 28.7649 17.0204 29.3441 14.6093 27.8372L12.4034 26.4585C11.4162 25.8415 10.1338 25.9875 9.3106 26.8107L5.06065 31.0607L2.93933 28.9393L7.18928 24.6894C9.00026 22.8784 11.8215 22.5571 13.9934 23.9145L16.1993 25.2932C17.2952 25.9782 18.7327 25.7149 19.5147 24.6859L23.702 19.1763C25.8687 16.3253 30.1387 16.2722 32.3757 19.0684L37.1713 25.063L34.8287 26.937L30.033 20.9425Z" fill="currentColor"/></svg>`,
+            'download': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 6.5C20.8284 6.5 21.5 7.17157 21.5 8L21.5 22.2984L26.9232 16.7058C27.4999 16.1111 28.4495 16.0964 29.0442 16.6731C29.6389 17.2499 29.6536 18.1995 29.0769 18.7942L21.0769 27.0442C20.7943 27.3356 20.4058 27.5 20 27.5C19.5942 27.5 19.2057 27.3356 18.9232 27.0442L10.9232 18.7942C10.3464 18.1995 10.3611 17.2499 10.9558 16.6732C11.5505 16.0964 12.5001 16.1111 13.0769 16.7058L18.5 22.2984L18.5 8C18.5 7.17157 19.1716 6.5 20 6.5Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M6.93934 34.0607C6.65804 33.7794 6.5 33.3978 6.5 33L6.5 29C6.5 28.1716 7.17157 27.5 8 27.5C8.82843 27.5 9.5 28.1716 9.5 29L9.5 31.5L30.5 31.5L30.5 29C30.5 28.1716 31.1716 27.5 32 27.5C32.8284 27.5 33.5 28.1716 33.5 29L33.5 33C33.5 33.8284 32.8284 34.5 32 34.5L8 34.5C7.60218 34.5 7.22064 34.342 6.93934 34.0607Z" fill="currentColor"/></svg>`,
+            'upload': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.93934 34.0607C6.65804 33.7794 6.5 33.3978 6.5 33L6.5 29C6.5 28.1716 7.17157 27.5 8 27.5C8.82843 27.5 9.5 28.1716 9.5 29L9.5 31.5L30.5 31.5L30.5 29C30.5 28.1716 31.1716 27.5 32 27.5C32.8284 27.5 33.5 28.1716 33.5 29L33.5 33C33.5 33.8284 32.8284 34.5 32 34.5L8 34.5C7.60218 34.5 7.22064 34.342 6.93934 34.0607Z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M19.9999 27.5C19.1715 27.5 18.4999 26.8284 18.4999 26L18.4999 11.7016L13.0767 17.2942C12.5 17.8889 11.5504 17.9036 10.9557 17.3269C10.3609 16.7501 10.3463 15.8005 10.923 15.2058L18.923 6.95578C19.2055 6.66444 19.5941 6.5 19.9999 6.5C20.4057 6.5 20.7942 6.66444 21.0767 6.95578L29.0767 15.2058C29.6534 15.8005 29.6388 16.7501 29.0441 17.3268C28.4494 17.9036 27.4997 17.8889 26.923 17.2942L21.4999 11.7016L21.4999 26C21.4999 26.8284 20.8283 27.5 19.9999 27.5Z" fill="currentColor"/></svg>`
+        };
+        this.iconDefaultSize = 24;  // 기본 크기
+        this.iconColors = [
+            '#000000', // 검정
+            '#FF0000', // 빨강
+            '#00FF00', // 초록
+            '#0000FF', // 파랑
+            '#FFA500'  // 주황
+        ];
+
         this.stickyColors = [
             '#fff740', // 노랑
             '#ff7eb9', // 핑크
@@ -193,15 +218,28 @@ class PrototypingTool {
         
         // 전체 document에 대한 스페이스바 기본 동작 방지
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault(); // 모든 스페이스바 기본 동작 방지
+            // contentEditable 요소 체크
+            const isEditableElement = (
+                ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || 
+                document.activeElement.isContentEditable || 
+                document.activeElement.contentEditable === 'true'
+            );
+    
+            // 편집 가능한 요소가 아닐 때만 스페이스바 기본 동작 방지
+            if (e.code === 'Space' && !isEditableElement) {
+                e.preventDefault();
             }
         });
     
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && !isSpacePressed && 
-                !(['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || 
-                  document.activeElement.contentEditable === 'true')) {
+            // contentEditable 요소 체크
+            const isEditableElement = (
+                ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) || 
+                document.activeElement.isContentEditable || 
+                document.activeElement.contentEditable === 'true'
+            );
+    
+            if (e.code === 'Space' && !isSpacePressed && !isEditableElement) {
                 isSpacePressed = true;
                 canvasArea.classList.add('panning');
                 document.body.style.cursor = 'grab';
@@ -483,23 +521,31 @@ class PrototypingTool {
             this.showImageDialog();
             return;
         }
+        if (type === 'icon') {
+            this.showIconDialog();
+            return;
+        }
         const element = {
             id: Date.now(),
             type,
             x: 100,
             y: 100,
-            width: type === 'link' ? 150 :
+            width: type === 'icon' ? this.iconDefaultSize :
+                (type === 'link' ? 150 :
+                (type === 'box' ? 200 : 
+                (type === 'sticky' ? 200 : 
+                (type === 'panel' ? this.panelDefaultSize.width : 120)))),
+            height: type === 'icon' ? this.iconDefaultSize :
+                    (type === 'link' ? 60 :
                     (type === 'box' ? 200 : 
                     (type === 'sticky' ? 200 : 
-                    (type === 'panel' ? this.panelDefaultSize.width : 120))),
-            height: type === 'link' ? 60 :
-                    (type === 'box' ? 200 : 
-                    (type === 'sticky' ? 200 : 
-                    (type === 'panel' ? this.panelDefaultSize.height : 40))),
+                    (type === 'panel' ? this.panelDefaultSize.height : 40)))),
             name: this.generateElementName(type),
-            content: type === 'link' ? '🔗 Click to set target page' :
-                    (type === 'sticky' ? 'Double click to edit memo' : 
-                    (type === 'panel' ? '' : type.charAt(0).toUpperCase() + type.slice(1))),
+            content: type === 'icon' ? Object.keys(this.icons)[0] : // 첫 번째 아이콘을 기본값으로
+                (type === 'link' ? '🔗 Click to set target page' :
+                (type === 'sticky' ? 'Double click to edit memo' : 
+                (type === 'panel' ? '' : type.charAt(0).toUpperCase() + type.slice(1)))),
+            iconColor: type === 'icon' ? this.iconColors[0] : undefined,
             zIndex: this.maxZIndex,
             opacity: type === 'sticky' ? 1 : undefined,
             fontSize: type === 'text' ? 16 : undefined,
@@ -509,6 +555,7 @@ class PrototypingTool {
             borderColor: type === 'box' ? '#dddddd' : 
                         (type === 'panel' ? '#dddddd' : undefined),
             showX: type === 'box' ? true : undefined,
+            radius: type === 'box' ? 0 : undefined,
             headerColor: type === 'panel' ? '#f5f5f5' : undefined,
             isPanel: type === 'panel',
             isBold: false,
@@ -521,6 +568,63 @@ class PrototypingTool {
         this.renderElement(element);
         this.selectElement(element);
         this.saveHistory();
+    }
+
+    showIconDialog() {
+        const dialog = document.createElement('div');
+        dialog.className = 'icon-dialog';
+        
+        const iconList = Object.entries(this.icons).map(([key, svg]) => `
+            <div class="icon-item" data-icon="${key}">
+                <div class="icon-preview">
+                    ${svg}
+                </div>
+                <div class="icon-name">${key}</div>
+            </div>
+        `).join('');
+        
+        dialog.innerHTML = `
+            <div class="icon-dialog-content">
+                <h3>Select Icon</h3>
+                <div class="icon-grid">
+                    ${iconList}
+                </div>
+                <div class="dialog-buttons">
+                    <button class="cancel-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+        
+        // 아이콘 선택 이벤트
+        dialog.querySelectorAll('.icon-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const iconKey = item.dataset.icon;
+                const element = {
+                    id: Date.now(),
+                    type: 'icon',
+                    x: 100,
+                    y: 100,
+                    width: this.iconDefaultSize,
+                    height: this.iconDefaultSize,
+                    name: this.generateElementName('icon'),
+                    content: iconKey,
+                    iconColor: this.iconColors[0],
+                    zIndex: this.maxZIndex
+                };
+                
+                this.elements.push(element);
+                this.renderElement(element);
+                this.selectElement(element);
+                this.saveHistory();
+                document.body.removeChild(dialog);
+            });
+        });
+        
+        dialog.querySelector('.cancel-btn').addEventListener('click', () => {
+            document.body.removeChild(dialog);
+        });
     }
 
     handleImageUpload(file) {
@@ -609,6 +713,8 @@ class PrototypingTool {
                 return `Note ${count}`;
             case 'image':
                 return `Image ${count}`;
+            case 'icon':
+                return `Icon ${count}`;
             default:
                 return `Element ${count}`;
         }
@@ -713,18 +819,56 @@ class PrototypingTool {
             },
             
             box: () => {
-                div.style.backgroundColor = element.backgroundColor || '#ffffff';
-                div.style.borderColor = element.borderColor || '#dddddd';
+                // 바깥쪽 div는 그대로 두고 내부에 새로운 컨테이너 추가
+                const innerContainer = document.createElement('div');
+                innerContainer.style.width = '100%';
+                innerContainer.style.height = '100%';
+                innerContainer.style.borderRadius = `${element.radius || 0}px`;
+                innerContainer.style.backgroundColor = element.backgroundColor || '#ffffff';
+                innerContainer.style.border = `1px solid ${element.borderColor || '#dddddd'}`;
+                innerContainer.style.overflow = 'hidden';
+                innerContainer.style.position = 'absolute';
+                innerContainer.style.top = '0';
+                innerContainer.style.left = '0';
                 
                 const placeholder = document.createElement('div');
                 placeholder.className = `box-placeholder ${element.showX ? '' : 'hide-x'}`;
+                placeholder.style.width = '100%';
+                placeholder.style.height = '100%';
+                placeholder.style.position = 'relative';
                 placeholder.innerHTML = `
                     <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
                         <line x1="0" y1="0" x2="100%" y2="100%" stroke="#ddd" stroke-width="1"/>
                         <line x1="100%" y1="0" x2="0" y2="100%" stroke="#ddd" stroke-width="1"/>
                     </svg>
                 `;
-                return placeholder;
+                
+                innerContainer.appendChild(placeholder);
+                
+                // 원래 div의 테두리와 배경색 제거
+                div.style.border = 'none';
+                div.style.background = 'none';
+                
+                return innerContainer;
+            },
+
+            icon: () => {
+                const iconSvg = this.icons[element.content];
+                if (!iconSvg) return null;
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = 'icon-wrapper';
+                wrapper.innerHTML = iconSvg;
+                
+                // SVG 스타일 적용
+                const svg = wrapper.querySelector('svg');
+                if (svg) {
+                    svg.style.width = '100%';
+                    svg.style.height = '100%';
+                    svg.style.color = element.iconColor || this.iconColors[0];
+                }
+                
+                return wrapper;
             },
             
             sticky: () => {
@@ -1282,6 +1426,17 @@ class PrototypingTool {
                     <div class="box-controls">
                         ${this.createColorControl('Background', element.backgroundColor, 'backgroundColor')}
                         ${this.createColorControl('Border', element.borderColor, 'borderColor')}
+                        <div class="control-group">
+                            <label>Border Radius</label>
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max="100" 
+                                value="${element.radius || 0}"
+                                onchange="tool.updateBoxStyle('radius', this.value)"
+                                class="radius-slider">
+                            <span>${element.radius || 0}px</span>
+                        </div>
                         <div class="checkbox-control">
                             <label>
                                 <input type="checkbox" 
@@ -1332,6 +1487,44 @@ class PrototypingTool {
                         `).join('')}
                     </div>
                     ${this.createStickyControls(element)}
+                `
+            }),
+
+            icon: (element) => ({
+                title: 'Icon Style',
+                html: `
+                    <div class="icon-controls">
+                        <div class="control-group">
+                            <label>Icon</label>
+                            <select onchange="tool.updateIconProperty('content', this.value)">
+                                ${Object.keys(this.icons).map(key => `
+                                    <option value="${key}" ${element.content === key ? 'selected' : ''}>
+                                        ${key}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div class="icon-colors">
+                            ${this.iconColors.map(color => `
+                                <button 
+                                    class="color-button ${element.iconColor === color ? 'active' : ''}"
+                                    style="background-color: ${color}"
+                                    onclick="tool.updateIconProperty('iconColor', '${color}')"
+                                ></button>
+                            `).join('')}
+                        </div>
+                        <div class="control-group">
+                            <label>Size</label>
+                            <input 
+                                type="range" 
+                                min="12" 
+                                max="128" 
+                                value="${element.width}"
+                                onchange="tool.updateIconSize(this.value)"
+                            >
+                            <span>${element.width}px</span>
+                        </div>
+                    </div>
                 `
             })
         };
@@ -1395,6 +1588,58 @@ class PrototypingTool {
             textarea.style.height = 'auto';
             textarea.style.height = `${textarea.scrollHeight}px`;
         }
+    }
+
+    // PrototypingTool 클래스에 추가
+    updateIconProperty(property, value) {
+        if (!this.selectedElement || this.selectedElement.type !== 'icon') return;
+        
+        this.selectedElement[property] = value;
+        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        
+        switch(property) {
+            case 'content':
+                // 아이콘 변경
+                const iconSvg = this.icons[value];
+                if (iconSvg) {
+                    const wrapper = elementDiv.querySelector('.icon-wrapper');
+                    wrapper.innerHTML = iconSvg;
+                    const svg = wrapper.querySelector('svg');
+                    if (svg) {
+                        svg.style.width = '100%';
+                        svg.style.height = '100%';
+                        svg.style.color = this.selectedElement.iconColor || this.iconColors[0];
+                    }
+                }
+                break;
+                
+            case 'iconColor':
+                // 색상 변경
+                const svg = elementDiv.querySelector('svg');
+                if (svg) {
+                    svg.style.color = value;
+                }
+                break;
+        }
+        
+        this.saveHistory();
+        this.updateProperties();
+    }
+
+    // 아이콘 크기 조절을 위한 메서드도 추가
+    updateIconSize(size) {
+        if (!this.selectedElement || this.selectedElement.type !== 'icon') return;
+        
+        const newSize = parseInt(size);
+        this.selectedElement.width = newSize;
+        this.selectedElement.height = newSize;
+        
+        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        elementDiv.style.width = `${newSize}px`;
+        elementDiv.style.height = `${newSize}px`;
+        
+        this.saveHistory();
+        this.updateProperties();
     }
     
     // 헬퍼 메서드들
@@ -1568,21 +1813,19 @@ class PrototypingTool {
     updateBoxStyle(property, value) {
         if (!this.selectedElement || this.selectedElement.type !== 'box') return;
         
-        // 요소의 속성 업데이트
-        this.selectedElement[property] = value;
+        const processedValue = property === 'radius' ? parseInt(value) : value;
+        this.selectedElement[property] = processedValue;
         
-        // DOM 요소 찾기
         const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+        const innerContainer = elementDiv.children[0];  // 내부 컨테이너 참조
         
-        // 속성별 처리
         switch (property) {
             case 'backgroundColor':
-                elementDiv.style.backgroundColor = value;
+                innerContainer.style.backgroundColor = value;
                 break;
                 
             case 'borderColor':
-                elementDiv.style.borderColor = value;
-                // X 표시의 색상도 함께 업데이트
+                innerContainer.style.borderColor = value;
                 const lines = elementDiv.querySelectorAll('line');
                 lines.forEach(line => line.setAttribute('stroke', value));
                 break;
@@ -1593,9 +1836,14 @@ class PrototypingTool {
                     placeholder.classList.toggle('hide-x', !value);
                 }
                 break;
+    
+            case 'radius':
+                innerContainer.style.borderRadius = `${processedValue}px`;
+                break;
         }
         
         this.saveHistory();
+        this.updateProperties();
     }
 
     updateBoxColor(color) {
@@ -2236,126 +2484,6 @@ class PrototypingTool {
             }
         };
         document.addEventListener('keydown', handleEsc);
-    }
-
-    // HTML로 내보내기
-    exportAsHTML() {
-        // CSS 스타일 생성
-        const styles = `
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-            .prototype-container {
-                position: relative;
-                width: ${this.currentDevice ? this.devicePresets[this.currentDevice].width : '100%'};
-                height: ${this.currentDevice ? this.devicePresets[this.currentDevice].height : '100%'};
-                background: white;
-                overflow: hidden;
-            }
-            .element {
-                position: absolute;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 8px;
-            }
-            .element.button {
-                background: #2196f3;
-                color: white;
-                border: none;
-                cursor: pointer;
-                text-align: center;
-            }
-            .element.input input {
-                width: 100%;
-                height: 100%;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 4px;
-            }
-            .element.text {
-                background: transparent;
-                border: none;
-            }
-        `;
-
-        // HTML 생성
-        let elementsHTML = '';
-        this.elements.forEach(element => {
-            const style = `
-                left: ${element.x}px;
-                top: ${element.y}px;
-                width: ${element.width}px;
-                height: ${element.height}px;
-                z-index: ${element.zIndex || 1};
-                ${element.type === 'text' ? `font-size: ${element.fontSize || 16}px;` : ''}
-            `;
-
-            let content = '';
-            switch(element.type) {
-                case 'button':
-                    content = `<button style="width:100%;height:100%;background:#2196f3;color:white;border:none;border-radius:4px;cursor:pointer;display:flex;justify-content:center;align-items:center;">${element.content}</button>`;
-                    break;
-                case 'input':
-                    content = `<input type="text" placeholder="${element.content}" style="width:100%;height:100%;">`;
-                    break;
-                case 'text':
-                    content = element.content;
-                    break;
-            }
-
-            elementsHTML += `
-                <div class="element ${element.type}" style="${style}">
-                    ${content}
-                </div>
-            `;
-        });
-
-        // 최종 HTML 문서 생성
-        const html = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Exported Prototype</title>
-                <style>${styles}</style>
-            </head>
-            <body>
-                <div class="prototype-container">
-                    ${elementsHTML}
-                </div>
-            </body>
-            </html>`;
-
-        // HTML 파일 다운로드
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = 'prototype.html';
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-    }
-
-    // HTML 내보내기시 인터랙션 코드 생성
-    generateInteractions() {
-        let js = '';
-        
-        // 버튼 클릭 이벤트 등 인터랙션 코드 추가
-        this.elements.forEach(element => {
-            if (element.type === 'button') {
-                js += `
-                    document.querySelector('#element-${element.id} button').addEventListener('click', function() {
-                        console.log('Button clicked:', '${element.content}');
-                    });
-                `;
-            }
-        });
-
-        return js;
     }
 
     addNewPage() {

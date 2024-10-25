@@ -18,6 +18,7 @@ body {
     background: #f0f0f0;
     border-bottom: 1px solid #ddd;
     display: flex;
+    align-items: center;
     gap: 8px;
 }
 
@@ -50,13 +51,19 @@ body {
     gap: 8px;
 }
 
+.components-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
 .component-btn {
     padding: 8px;
     background: white;
     border: 1px solid #ddd;
     border-radius: 4px;
     cursor: pointer;
-    text-align: left;
+    text-align: center;
 }
 
 .component-btn:hover {
@@ -499,12 +506,36 @@ h2 {
     cursor: pointer;
 }
 
-.image-dialog button.cancel-btn {
-    background: #ddd;
+.image-dialog button,
+.icon-dialog button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    background: #2196f3;
+    color: white;
+    min-width: 80px;
 }
 
-.image-dialog button:hover {
-    opacity: 0.9;
+/* 취소 버튼 스타일 */
+.image-dialog button.cancel-btn,
+.icon-dialog button.cancel-btn {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+/* 호버 효과 */
+.image-dialog button:hover,
+.icon-dialog button:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 취소 버튼 호버 효과 */
+.image-dialog button.cancel-btn:hover,
+.icon-dialog button.cancel-btn:hover {
+    background: #e8e8e8;
 }
 
 .element.box {
@@ -513,6 +544,7 @@ h2 {
     padding: 0;
     position: relative;
     overflow: visible;
+    /* overflow: hidden; */
 }
 
 .box-placeholder {
@@ -580,6 +612,11 @@ h2 {
     color: #666;
 }
 
+.radius-slider {
+    flex: 1;
+    height: 4px;
+}
+
 .opacity-slider {
     flex: 1;
 }
@@ -595,6 +632,7 @@ h2 {
     min-width: 30px;
     font-size: 12px;
     color: #666;
+    text-align: right;
 }
 
 .shortcut-modal {
@@ -887,8 +925,7 @@ h2 {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
-}
+ }
 
 .element.link:hover {
     background: rgba(33, 150, 243, 0.3);
@@ -945,4 +982,110 @@ h2 {
     border: none;
     display: flex;
     align-items: center;
+}
+
+.box-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.icon-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.icon-dialog-content {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    min-width: 600px;
+    max-width: 800px;
+}
+
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.icon-item {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.icon-item:hover {
+    background: #f5f5f5;
+}
+
+.icon-preview {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-name {
+    font-size: 12px;
+    margin-top: 4px;
+    color: #666;
+}
+
+.element.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.icon-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-wrapper svg {
+    width: 100%;
+    height: 100%;
+}
+
+.icon-colors {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.color-button {
+    width: 24px;
+    height: 24px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+}
+
+.color-button.active {
+    border-color: #2196f3;
+}
+
+.color-button:hover {
+    transform: scale(1.1);
 }
