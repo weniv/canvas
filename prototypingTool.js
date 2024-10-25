@@ -79,82 +79,69 @@ class PrototypingTool {
     }
 
     initializeEvents() {
-        // 컴포넌트 버튼 이벤트
-        document.querySelectorAll('.component-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.addElement(btn.dataset.type));
+        // 이벤트 위임을 사용하여 컴포넌트 버튼 이벤트 처리
+        document.querySelector('.components-panel').addEventListener('click', e => {
+            const btn = e.target.closest('.component-btn');
+            if (btn) this.addElement(btn.dataset.type);
         });
-
+    
         // 캔버스 이벤트
         const canvas = document.getElementById('canvas');
-        canvas.addEventListener('click', (e) => {
+        canvas.addEventListener('click', e => {
             if (e.target === canvas) this.clearSelection();
         });
-
-        // 키보드 단축키
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Delete' && this.selectedElement) {
-                this.deleteSelected();
+    
+        // 키보드 이벤트 통합 (단축키 + 방향키)
+        const ARROW_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+        
+        document.addEventListener('keydown', e => {
+            // 요소가 선택된 상태에서의 키 이벤트
+            if (this.selectedElement) {
+                // Delete 키 처리
+                if (e.key === 'Delete') {
+                    this.deleteSelected();
+                    return;
+                }
+    
+                // 방향키 처리
+                if (ARROW_KEYS.has(e.key)) {
+                    e.preventDefault();
+                    const moveAmount = e.shiftKey ? 10 : 1;
+                    const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
+                    
+                    // 좌표 업데이트
+                    if (e.key === 'ArrowUp') this.selectedElement.y -= moveAmount;
+                    else if (e.key === 'ArrowDown') this.selectedElement.y += moveAmount;
+                    else if (e.key === 'ArrowLeft') this.selectedElement.x -= moveAmount;
+                    else if (e.key === 'ArrowRight') this.selectedElement.x += moveAmount;
+                    
+                    // DOM 업데이트는 한 번만
+                    elementDiv.style.left = `${this.selectedElement.x}px`;
+                    elementDiv.style.top = `${this.selectedElement.y}px`;
+                    
+                    this.updateProperties();
+                    
+                    // 디바운스된 히스토리 저장
+                    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+                    this.saveTimeout = setTimeout(() => this.saveHistory(), 500);
+                    return;
+                }
             }
-            if ((e.ctrlKey || e.metaKey)) {
-                switch(e.key.toLowerCase()) {
-                    case 'z':
-                        e.preventDefault();
-                        this.undo();
-                        break;
-                    case 'y':
-                        e.preventDefault();
-                        this.redo();
-                        break;
-                    case 'c':
-                        e.preventDefault();
-                        this.copyElement();
-                        break;
-                    case 'v':
-                        e.preventDefault();
-                        this.pasteElement();
-                        break;
+    
+            // Ctrl/Cmd 단축키 처리
+            if (e.ctrlKey || e.metaKey) {
+                const key = e.key.toLowerCase();
+                if (key === 'z' || key === 'y' || key === 'c' || key === 'v') {
+                    e.preventDefault();
+                    if (key === 'z') this.undo();
+                    else if (key === 'y') this.redo();
+                    else if (key === 'c') this.copyElement();
+                    else if (key === 'v') this.pasteElement();
                 }
             }
         });
-
-        // 방향키 이동 이벤트 추가
-        document.addEventListener('keydown', (e) => {
-            if (!this.selectedElement) return;
-            
-            // 방향키 처리
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                e.preventDefault();
-                
-                const moveAmount = e.shiftKey ? 10 : 1; // Shift 키를 누르면 10px씩 이동
-                
-                switch(e.key) {
-                    case 'ArrowUp':
-                        this.selectedElement.y -= moveAmount;
-                        break;
-                    case 'ArrowDown':
-                        this.selectedElement.y += moveAmount;
-                        break;
-                    case 'ArrowLeft':
-                        this.selectedElement.x -= moveAmount;
-                        break;
-                    case 'ArrowRight':
-                        this.selectedElement.x += moveAmount;
-                        break;
-                }
-
-                // DOM 업데이트
-                const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
-                elementDiv.style.left = `${this.selectedElement.x}px`;
-                elementDiv.style.top = `${this.selectedElement.y}px`;
-                
-                this.updateProperties();
-                
-                // 연속 이동을 위한 디바운스된 히스토리 저장
-                if (this.saveTimeout) clearTimeout(this.saveTimeout);
-                this.saveTimeout = setTimeout(() => this.saveHistory(), 500);
-            }
-        });
-        // 줌과 패닝 이벤트 리스너들을 다른 이벤트 리스너들과 분리
+    
+        // 줌과 패닝 이벤트 초기화
         this.initializeZoomAndPan();
     }
 
@@ -653,148 +640,152 @@ class PrototypingTool {
         const div = document.createElement('div');
         div.id = `element-${element.id}`;
         div.className = `element ${element.type}`;
-        div.style.left = `${element.x}px`;
-        div.style.top = `${element.y}px`;
-        div.style.width = `${element.width}px`;
-        div.style.height = `${element.height}px`;
-        div.style.zIndex = element.zIndex || 1;
-    
-        if (element.type === 'image') {
-            const img = document.createElement('img');
-            img.src = element.content;
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'contain';
-            img.draggable = false;
-            img.alt = 'Uploaded image';
-            div.appendChild(img);
-        }
-        else if (element.type === 'box') {
-            div.style.backgroundColor = element.backgroundColor || '#ffffff';
-            div.style.borderColor = element.borderColor || '#dddddd';
-            
-            // SVG로 X 표시 생성
-            const placeholder = document.createElement('div');
-            placeholder.className = `box-placeholder ${element.showX ? '' : 'hide-x'}`;
-            
-            placeholder.innerHTML = `
-                <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
-                    <line 
-                        x1="0" y1="0" 
-                        x2="100%" y2="100%" 
-                        stroke="#ddd" 
-                        stroke-width="1"
-                    />
-                    <line 
-                        x1="100%" y1="0" 
-                        x2="0" y2="100%" 
-                        stroke="#ddd" 
-                        stroke-width="1"
-                    />
-                </svg>
-            `;
-            
-            div.appendChild(placeholder);
-        }
-        else if (element.type === 'sticky') {
-            div.style.backgroundColor = element.stickyColor;
-            div.innerHTML = `
-                <div class="sticky-content" style="font-size: ${element.fontSize}px">${element.content}</div>
-            `;
-    
-            // 더블클릭으로 편집
-            div.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                if (!e.target.closest('.resize-handle')) {
-                    this.startEditingSticky(element);
-                }
-            });
-    
-            const contentDiv = div.querySelector('.sticky-content');
-            contentDiv.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                this.startEditingSticky(element);
-            });
-        }
-        else if (element.type === 'panel') {
-            div.style.backgroundColor = element.backgroundColor || '#ffffff';
-            div.style.borderColor = element.borderColor || '#dddddd';
-    
-            div.innerHTML = `
-                <div class="panel-header" style="background-color: ${element.headerColor || '#f5f5f5'}; border-bottom-color: ${element.borderColor || '#dddddd'}">
-                    <div class="panel-title">Panel</div>
-                    <button class="panel-close">×</button>
-                </div>
-                <div class="panel-content" style="background-color: ${element.backgroundColor || '#ffffff'}">${element.content}</div>
-            `;
-    
-            const closeBtn = div.querySelector('.panel-close');
-            closeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (confirm('Delete this panel?')) {
-                    this.deleteElement(element.id);
-                }
-            });
-        }
-        else if (element.type === 'text') {
-            div.textContent = element.content;
-            if (element.fontSize) {
-                div.style.fontSize = `${element.fontSize}px`;
-            }
-            if (element.isBold) {
-                div.style.fontWeight = 'bold';
-            }
-            div.style.justifyContent = element.justifyContent || 'center';  // 정렬 적용
-            // 더블클릭 이벤트 추가
-            div.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                this.startEditing(element);
-            });
-        }
-        else if (element.type === 'link') {
-            div.innerHTML = `<div class="link-content">${element.content}</div>`;
-    
-            div.addEventListener('click', (e) => {
-                if (this.previewMode && element.targetPageId) {
-                    e.stopPropagation();
-                    this.switchPage(element.targetPageId);
-                }
-            });
-        }
-        else if (element.type === 'button') {
-            div.textContent = element.content;
         
-            // 더블클릭 이벤트 추가
-            div.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                this.startEditingButton(element);
-            });
-        }
-        else if (element.type === 'input') {
-            div.innerHTML = `<input type="text" placeholder="${element.content}" style="width:100%;height:100%;border:none;padding:4px;">`;
-        }
+        // 공통 스타일 적용
+        Object.assign(div.style, {
+            left: `${element.x}px`,
+            top: `${element.y}px`,
+            width: `${element.width}px`,
+            height: `${element.height}px`,
+            zIndex: element.zIndex || 1
+        });
     
-        // 이벤트 리스너 추가
-        div.addEventListener('mousedown', (e) => {
-            if (!e.target.classList.contains('panel-close')) {
-                this.startDragging(e, element);
-            }
-            if (!e.target.classList.contains('resize-handle')) {
-                this.startDragging(e, element);
-            }
-            if (!this.previewMode) {  // 미리보기 모드가 아닐 때만 드래그 허용
-                if (!e.target.classList.contains('resize-handle')) {
-                    this.startDragging(e, element);
+        // 요소 타입별 렌더링
+        const elementContent = {
+            image: () => {
+                const img = document.createElement('img');
+                Object.assign(img, {
+                    src: element.content,
+                    style: 'width: 100%; height: 100%; object-fit: contain;',
+                    draggable: false,
+                    alt: 'Uploaded image'
+                });
+                return img;
+            },
+            
+            box: () => {
+                div.style.backgroundColor = element.backgroundColor || '#ffffff';
+                div.style.borderColor = element.borderColor || '#dddddd';
+                
+                const placeholder = document.createElement('div');
+                placeholder.className = `box-placeholder ${element.showX ? '' : 'hide-x'}`;
+                placeholder.innerHTML = `
+                    <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
+                        <line x1="0" y1="0" x2="100%" y2="100%" stroke="#ddd" stroke-width="1"/>
+                        <line x1="100%" y1="0" x2="0" y2="100%" stroke="#ddd" stroke-width="1"/>
+                    </svg>
+                `;
+                return placeholder;
+            },
+            
+            sticky: () => {
+                div.style.backgroundColor = element.stickyColor;
+                const content = document.createElement('div');
+                content.className = 'sticky-content';
+                content.style.fontSize = `${element.fontSize}px`;
+                content.textContent = element.content;
+                
+                // 더블클릭 이벤트 처리
+                const handleDblClick = e => {
+                    e.stopPropagation();
+                    if (!e.target.closest('.resize-handle')) {
+                        this.startEditingSticky(element);
+                    }
+                };
+                
+                div.addEventListener('dblclick', handleDblClick);
+                content.addEventListener('dblclick', handleDblClick);
+                
+                return content;
+            },
+            
+            panel: () => {
+                Object.assign(div.style, {
+                    backgroundColor: element.backgroundColor || '#ffffff',
+                    borderColor: element.borderColor || '#dddddd'
+                });
+                
+                const container = document.createElement('div');
+                container.innerHTML = `
+                    <div class="panel-header" style="background-color: ${element.headerColor || '#f5f5f5'}; border-bottom-color: ${element.borderColor || '#dddddd'}">
+                        <div class="panel-title">Panel</div>
+                        <button class="panel-close">×</button>
+                    </div>
+                    <div class="panel-content" style="background-color: ${element.backgroundColor || '#ffffff'}">${element.content}</div>
+                `;
+                
+                container.querySelector('.panel-close').addEventListener('click', e => {
+                    e.stopPropagation();
+                    if (confirm('Delete this panel?')) {
+                        this.deleteElement(element.id);
+                    }
+                });
+                
+                return container;
+            },
+            
+            text: () => {
+                div.textContent = element.content;
+                if (element.fontSize) div.style.fontSize = `${element.fontSize}px`;
+                if (element.isBold) div.style.fontWeight = 'bold';
+                div.style.justifyContent = element.justifyContent || 'center';
+                
+                div.addEventListener('dblclick', e => {
+                    e.stopPropagation();
+                    this.startEditing(element);
+                });
+                
+                return null;
+            },
+            
+            link: () => {
+                const content = document.createElement('div');
+                content.className = 'link-content';
+                content.textContent = element.content;
+                
+                if (this.previewMode && element.targetPageId) {
+                    div.addEventListener('click', e => {
+                        e.stopPropagation();
+                        this.switchPage(element.targetPageId);
+                    });
                 }
+                
+                return content;
+            },
+            
+            button: () => {
+                div.textContent = element.content;
+                div.addEventListener('dblclick', e => {
+                    e.stopPropagation();
+                    this.startEditingButton(element);
+                });
+                return null;
+            },
+            
+            input: () => {
+                const input = document.createElement('input');
+                Object.assign(input, {
+                    type: 'text',
+                    placeholder: element.content,
+                    style: 'width:100%;height:100%;border:none;padding:4px;'
+                });
+                return input;
+            }
+        };
+    
+        // 요소 타입별 콘텐츠 생성 및 추가
+        const content = elementContent[element.type]?.();
+        if (content) div.appendChild(content);
+    
+        // 공통 이벤트 리스너 추가
+        div.addEventListener('mousedown', e => {
+            if (!this.previewMode && !e.target.classList.contains('panel-close') && !e.target.classList.contains('resize-handle')) {
+                this.startDragging(e, element);
             }
         });
     
-        div.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('panel-close')) {
-                e.stopPropagation();
-                this.selectElement(element);
-            }
-            if (!this.previewMode) {  // 미리보기 모드가 아닐 때만 선택 허용
+        div.addEventListener('click', e => {
+            if (!this.previewMode && !e.target.classList.contains('panel-close')) {
                 e.stopPropagation();
                 this.selectElement(element);
             }
@@ -1098,396 +1089,357 @@ class PrototypingTool {
         const dx = e.clientX - this.startPos.x;
         const dy = e.clientY - this.startPos.y;
         
+        const canvas = document.getElementById('canvas');
+        const canvasRect = canvas.getBoundingClientRect();
+        const guides = [];
+    
+        // 리사이즈 방향에 따른 계산 매핑
+        const resizeCalculations = {
+            e: { 
+                width: Math.max(50, this.startSize.width + dx),
+                snapCondition: (newX, newWidth) => Math.abs(newX + newWidth - canvasRect.width) < this.snapThreshold,
+                snapWidth: (newX) => canvasRect.width - newX,
+                guide: { type: 'vertical', position: canvasRect.width }
+            },
+            w: {
+                width: Math.max(50, this.startSize.width - dx),
+                x: this.startSize.x + (this.startSize.width - Math.max(50, this.startSize.width - dx)),
+                snapCondition: (newX) => Math.abs(newX) < this.snapThreshold,
+                snapX: () => 0,
+                snapWidth: (newX) => this.startSize.x + this.startSize.width,
+                guide: { type: 'vertical', position: 0 }
+            },
+            s: {
+                height: Math.max(30, this.startSize.height + dy),
+                snapCondition: (newY, newHeight) => Math.abs(newY + newHeight - canvasRect.height) < this.snapThreshold,
+                snapHeight: (newY) => canvasRect.height - newY,
+                guide: { type: 'horizontal', position: canvasRect.height }
+            },
+            n: {
+                height: Math.max(30, this.startSize.height - dy),
+                y: this.startSize.y + (this.startSize.height - Math.max(30, this.startSize.height - dy)),
+                snapCondition: (newY) => Math.abs(newY) < this.snapThreshold,
+                snapY: () => 0,
+                snapHeight: (newY) => this.startSize.y + this.startSize.height,
+                guide: { type: 'horizontal', position: 0 }
+            }
+        };
+    
+        // 초기 값 설정
         let newWidth = this.startSize.width;
         let newHeight = this.startSize.height;
         let newX = this.startSize.x;
         let newY = this.startSize.y;
     
-        const canvas = document.getElementById('canvas');
-        const canvasRect = canvas.getBoundingClientRect();
-        const guides = [];
+        // 리사이즈 핸들 방향 분해
+        const directions = this.resizeHandle.split('');
+        
+        // 각 방향별로 계산 수행
+        directions.forEach(direction => {
+            const calc = resizeCalculations[direction];
+            if (!calc) return;
     
-        // 리사이즈 방향에 따른 처리
-        switch (this.resizeHandle) {
-            case 'e':
-                newWidth = Math.max(50, this.startSize.width + dx);
-                // 오른쪽 경계 스냅
-                if (Math.abs(newX + newWidth - canvasRect.width) < this.snapThreshold) {
-                    newWidth = canvasRect.width - newX;
-                    guides.push({ type: 'vertical', position: canvasRect.width });
+            // 너비/높이 업데이트
+            if ('width' in calc) {
+                newWidth = calc.width;
+                if ('x' in calc) newX = calc.x;
+                
+                if (calc.snapCondition(newX, newWidth)) {
+                    if (calc.snapWidth) newWidth = calc.snapWidth(newX);
+                    if (calc.snapX) newX = calc.snapX();
+                    guides.push(calc.guide);
                 }
-                break;
+            }
+            
+            if ('height' in calc) {
+                newHeight = calc.height;
+                if ('y' in calc) newY = calc.y;
+                
+                if (calc.snapCondition(newY, newHeight)) {
+                    if (calc.snapHeight) newHeight = calc.snapHeight(newY);
+                    if (calc.snapY) newY = calc.snapY();
+                    guides.push(calc.guide);
+                }
+            }
+        });
     
-            case 'w':
-                newWidth = Math.max(50, this.startSize.width - dx);
-                newX = this.startSize.x + (this.startSize.width - newWidth);
-                // 왼쪽 경계 스냅
-                if (Math.abs(newX) < this.snapThreshold) {
-                    newX = 0;
-                    newWidth = this.startSize.x + this.startSize.width;
-                    guides.push({ type: 'vertical', position: 0 });
-                }
-                break;
-    
-            case 's':
-                newHeight = Math.max(30, this.startSize.height + dy);
-                // 하단 경계 스냅
-                if (Math.abs(newY + newHeight - canvasRect.height) < this.snapThreshold) {
-                    newHeight = canvasRect.height - newY;
-                    guides.push({ type: 'horizontal', position: canvasRect.height });
-                }
-                break;
-    
-            case 'n':
-                newHeight = Math.max(30, this.startSize.height - dy);
-                newY = this.startSize.y + (this.startSize.height - newHeight);
-                // 상단 경계 스냅
-                if (Math.abs(newY) < this.snapThreshold) {
-                    newY = 0;
-                    newHeight = this.startSize.y + this.startSize.height;
-                    guides.push({ type: 'horizontal', position: 0 });
-                }
-                break;
-    
-            case 'se':
-                newWidth = Math.max(50, this.startSize.width + dx);
-                newHeight = Math.max(30, this.startSize.height + dy);
-                // 오른쪽과 하단 경계 스냅
-                if (Math.abs(newX + newWidth - canvasRect.width) < this.snapThreshold) {
-                    newWidth = canvasRect.width - newX;
-                    guides.push({ type: 'vertical', position: canvasRect.width });
-                }
-                if (Math.abs(newY + newHeight - canvasRect.height) < this.snapThreshold) {
-                    newHeight = canvasRect.height - newY;
-                    guides.push({ type: 'horizontal', position: canvasRect.height });
-                }
-                break;
-    
-            case 'sw':
-                newWidth = Math.max(50, this.startSize.width - dx);
-                newHeight = Math.max(30, this.startSize.height + dy);
-                newX = this.startSize.x + (this.startSize.width - newWidth);
-                // 왼쪽과 하단 경계 스냅
-                if (Math.abs(newX) < this.snapThreshold) {
-                    newX = 0;
-                    newWidth = this.startSize.x + this.startSize.width;
-                    guides.push({ type: 'vertical', position: 0 });
-                }
-                if (Math.abs(newY + newHeight - canvasRect.height) < this.snapThreshold) {
-                    newHeight = canvasRect.height - newY;
-                    guides.push({ type: 'horizontal', position: canvasRect.height });
-                }
-                break;
-    
-            case 'ne':
-                newWidth = Math.max(50, this.startSize.width + dx);
-                newHeight = Math.max(30, this.startSize.height - dy);
-                newY = this.startSize.y + (this.startSize.height - newHeight);
-                // 오른쪽과 상단 경계 스냅
-                if (Math.abs(newX + newWidth - canvasRect.width) < this.snapThreshold) {
-                    newWidth = canvasRect.width - newX;
-                    guides.push({ type: 'vertical', position: canvasRect.width });
-                }
-                if (Math.abs(newY) < this.snapThreshold) {
-                    newY = 0;
-                    newHeight = this.startSize.y + this.startSize.height;
-                    guides.push({ type: 'horizontal', position: 0 });
-                }
-                break;
-    
-            case 'nw':
-                newWidth = Math.max(50, this.startSize.width - dx);
-                newHeight = Math.max(30, this.startSize.height - dy);
-                newX = this.startSize.x + (this.startSize.width - newWidth);
-                newY = this.startSize.y + (this.startSize.height - newHeight);
-                // 왼쪽과 상단 경계 스냅
-                if (Math.abs(newX) < this.snapThreshold) {
-                    newX = 0;
-                    newWidth = this.startSize.x + this.startSize.width;
-                    guides.push({ type: 'vertical', position: 0 });
-                }
-                if (Math.abs(newY) < this.snapThreshold) {
-                    newY = 0;
-                    newHeight = this.startSize.y + this.startSize.height;
-                    guides.push({ type: 'horizontal', position: 0 });
-                }
-                break;
-        }
-
-        if (this.resizingElement.type === 'image' && this.resizingElement.aspectRatio) {
-            // Shift 키를 누르지 않았을 때만 비율 유지
-            if (!e.shiftKey) {
-                if (['e', 'w'].includes(this.resizeHandle)) {
-                    newHeight = newWidth / this.resizingElement.aspectRatio;
-                } else if (['n', 's'].includes(this.resizeHandle)) {
-                    newWidth = newHeight * this.resizingElement.aspectRatio;
-                } else {
-                    // 모서리 리사이즈의 경우 너비 기준으로 높이 조정
-                    newHeight = newWidth / this.resizingElement.aspectRatio;
-                }
+        // 이미지 비율 유지 처리
+        if (this.resizingElement.type === 'image' && this.resizingElement.aspectRatio && !e.shiftKey) {
+            if (directions.some(d => ['e', 'w'].includes(d))) {
+                newHeight = newWidth / this.resizingElement.aspectRatio;
+            } else if (directions.some(d => ['n', 's'].includes(d))) {
+                newWidth = newHeight * this.resizingElement.aspectRatio;
             }
         }
     
-        // 그리드에 맞추기
+        // 그리드 스냅 처리
         if (this.gridSize > 0) {
-            newWidth = Math.round(newWidth / this.gridSize) * this.gridSize;
-            newHeight = Math.round(newHeight / this.gridSize) * this.gridSize;
-            newX = Math.round(newX / this.gridSize) * this.gridSize;
-            newY = Math.round(newY / this.gridSize) * this.gridSize;
+            const roundToGrid = value => Math.round(value / this.gridSize) * this.gridSize;
+            newWidth = roundToGrid(newWidth);
+            newHeight = roundToGrid(newHeight);
+            newX = roundToGrid(newX);
+            newY = roundToGrid(newY);
         }
     
         // 요소 업데이트
-        this.resizingElement.width = newWidth;
-        this.resizingElement.height = newHeight;
-        this.resizingElement.x = newX;
-        this.resizingElement.y = newY;
+        const updates = {
+            width: newWidth,
+            height: newHeight,
+            x: newX,
+            y: newY
+        };
     
-        // DOM 업데이트
+        // 요소와 DOM 업데이트
+        Object.assign(this.resizingElement, updates);
+        
         const elementDiv = document.getElementById(`element-${this.resizingElement.id}`);
-        elementDiv.style.width = `${newWidth}px`;
-        elementDiv.style.height = `${newHeight}px`;
-        elementDiv.style.left = `${newX}px`;
-        elementDiv.style.top = `${newY}px`;
+        Object.assign(elementDiv.style, {
+            width: `${newWidth}px`,
+            height: `${newHeight}px`,
+            left: `${newX}px`,
+            top: `${newY}px`
+        });
     
-        // 가이드라인 표시
+        // 가이드라인과 속성 업데이트
         this.showSnapGuides(guides);
-    
         this.updateProperties();
     }
 
     updateProperties() {
         const propertiesDiv = document.getElementById('properties');
+        
         if (!this.selectedElement) {
             propertiesDiv.innerHTML = '<p>No element selected</p>';
             return;
         }
-
-        // 패널일 경우 색상 컨트롤 추가
-        let colorControls = '';
-        if (this.selectedElement.type === 'panel') {
-            colorControls = `
-                <div class="property-group">
-                    <label class="property-label">Panel Colors</label>
+    
+        // 각 요소 타입별 특수 컨트롤 생성 함수
+        const specialControls = {
+            panel: (element) => ({
+                title: 'Panel Colors',
+                html: `
                     <div class="color-controls">
-                        <div class="color-control">
-                            <label>Background</label>
-                            <input type="color" 
-                                value="${this.selectedElement.backgroundColor || '#ffffff'}"
-                                onchange="tool.updatePanelColor('backgroundColor', this.value)">
-                        </div>
-                        <div class="color-control">
-                            <label>Border</label>
-                            <input type="color" 
-                                value="${this.selectedElement.borderColor || '#dddddd'}"
-                                onchange="tool.updatePanelColor('borderColor', this.value)">
-                        </div>
-                        <div class="color-control">
-                            <label>Header</label>
-                            <input type="color" 
-                                value="${this.selectedElement.headerColor || '#f5f5f5'}"
-                                onchange="tool.updatePanelColor('headerColor', this.value)">
-                        </div>
+                        ${this.createColorControl('Background', element.backgroundColor, 'backgroundColor')}
+                        ${this.createColorControl('Border', element.borderColor, 'borderColor')}
+                        ${this.createColorControl('Header', element.headerColor, 'headerColor')}
                     </div>
-                </div>
-            `;
-        }
-
-        let linkControls = '';
-        if (this.selectedElement.type === 'link') {
-            linkControls = `
-                <div class="property-group">
-                    <label class="property-label">Target Page</label>
-                    <select class="link-target-select" 
-                            onchange="tool.updateLinkTarget(this.value)">
+                `,
+                handler: 'updatePanelColor'
+            }),
+    
+            link: (element) => ({
+                title: 'Target Page',
+                html: `
+                    <select class="link-target-select" onchange="tool.updateLinkTarget(this.value)">
                         <option value="">Select target page...</option>
                         ${Array.from(this.pages.entries())
                             .filter(([pageId]) => pageId !== this.currentPageId)
                             .map(([pageId, page]) => `
-                                <option value="${pageId}" 
-                                    ${this.selectedElement.targetPageId === pageId ? 'selected' : ''}>
+                                <option value="${pageId}" ${element.targetPageId === pageId ? 'selected' : ''}>
                                     ${page.name}
                                 </option>
                             `).join('')}
                     </select>
-                </div>
-            `;
-        }
-
-        let boxControls = '';
-        if (this.selectedElement.type === 'box') {
-            boxControls = `
-            <div class="property-group">
-                <label class="property-label">Box Style</label>
-                <div class="box-controls">
-                    <div class="color-control">
-                        <label>Background</label>
-                        <input type="color" 
-                            value="${this.selectedElement.backgroundColor || '#ffffff'}"
-                            onchange="tool.updateBoxStyle('backgroundColor', this.value)">
+                `
+            }),
+    
+            box: (element) => ({
+                title: 'Box Style',
+                html: `
+                    <div class="box-controls">
+                        ${this.createColorControl('Background', element.backgroundColor, 'backgroundColor')}
+                        ${this.createColorControl('Border', element.borderColor, 'borderColor')}
+                        <div class="checkbox-control">
+                            <label>
+                                <input type="checkbox" 
+                                    ${element.showX ? 'checked' : ''}
+                                    onchange="tool.updateBoxStyle('showX', this.checked)">
+                                Show X Mark
+                            </label>
+                        </div>
                     </div>
-                    <div class="color-control">
-                        <label>Border</label>
-                        <input type="color" 
-                            value="${this.selectedElement.borderColor || '#dddddd'}"
-                            onchange="tool.updateBoxStyle('borderColor', this.value)">
+                `,
+                handler: 'updateBoxStyle'
+            }),
+    
+            text: (element) => ({
+                title: 'Text Style',
+                html: `
+                    <div class="text-controls">
+                        <button 
+                            class="style-button ${element.isBold ? 'active' : ''}"
+                            onclick="tool.toggleBold()"
+                            title="Bold">
+                            <b>B</b>
+                        </button>
+                        <input type="number" 
+                            class="property-input" 
+                            value="${element.fontSize || 16}"
+                            onchange="tool.updateFontSize(this.value)"
+                            style="width: 60px">
+                        <div class="text-align-controls">
+                            ${this.createAlignButton('start', element)}
+                            ${this.createAlignButton('center', element)}
+                            ${this.createAlignButton('end', element)}
+                        </div>
                     </div>
-                    <div class="checkbox-control">
-                        <label>
-                            <input type="checkbox" 
-                                ${this.selectedElement.showX ? 'checked' : ''}
-                                onchange="tool.updateBoxStyle('showX', this.checked)">
-                            Show X Mark
-                        </label>
-                    </div>
-                </div>
-            </div>
-            `;
-        }
-
-        if (this.selectedElement.type === 'sticky') {
-            colorControls = `
-                <div class="property-group">
-                    <label class="property-label">Sticky Style</label>
+                `
+            }),
+    
+            sticky: (element) => ({
+                title: 'Sticky Style',
+                html: `
                     <div class="sticky-colors">
                         ${this.stickyColors.map(color => `
                             <button 
-                                class="color-button ${this.selectedElement.stickyColor === color ? 'active' : ''}"
+                                class="color-button ${element.stickyColor === color ? 'active' : ''}"
                                 style="background-color: ${color}"
                                 onclick="tool.updateStickyColor('${color}')"
                             ></button>
                         `).join('')}
                     </div>
-                    <div class="sticky-controls">
-                        <div class="control-group">
-                            <label>Opacity</label>
-                            <input 
-                                type="range" 
-                                min="0.1" 
-                                max="1" 
-                                step="0.1" 
-                                value="${this.selectedElement.opacity}"
-                                onchange="tool.updateStickyStyle('opacity', this.value)"
-                                class="opacity-slider"
-                            >
-                            <span>${Math.round(this.selectedElement.opacity * 100)}%</span>
-                        </div>
-                        <div class="control-group">
-                            <label>Font Size</label>
-                            <input 
-                                type="number" 
-                                min="8" 
-                                max="72" 
-                                value="${this.selectedElement.fontSize}"
-                                onchange="tool.updateStickyStyle('fontSize', this.value)"
-                                class="font-size-input"
-                            >
-                            <span>px</span>
-                        </div>
+                    ${this.createStickyControls(element)}
+                `
+            })
+        };
+    
+        // 공통 속성 섹션 생성
+        const commonSections = [
+            {
+                title: 'Type',
+                content: this.selectedElement.type
+            },
+            {
+                title: 'Layer Position',
+                content: `
+                    <div class="layer-controls">
+                        <button onclick="tool.moveToTop()">맨 위로</button>
+                        <button onclick="tool.moveUp()">위로</button>
+                        <button onclick="tool.moveDown()">아래로</button>
+                        <button onclick="tool.moveToBottom()">맨 아래로</button>
                     </div>
-                </div>
-            `;
-        }
-
-        let textControls = '';
-        if (this.selectedElement.type === 'text') {
-            textControls = `
-                <div class="property-group">
-                    <label class="property-label">Text Style</label>
-                    <div class="text-controls">
-                        <button 
-                            class="style-button ${this.selectedElement.isBold ? 'active' : ''}"
-                            onclick="tool.toggleBold()"
-                            title="Bold"
-                        >
-                            <b>B</b>
-                        </button>
-                        <input type="number" 
-                            class="property-input" 
-                            value="${this.selectedElement.fontSize || 16}"
-                            onchange="tool.updateFontSize(this.value)"
-                            style="width: 60px"
-                        >
-                        <div class="text-align-controls">
-                            <button 
-                                class="style-button ${this.selectedElement.textAlign === 'left' ? 'active' : ''}"
-                                onclick="tool.updateTextAlign('start')"
-                                title="Align Left"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" />
-                                </svg>
-                            </button>
-                            <button 
-                                class="style-button ${this.selectedElement.textAlign === 'center' ? 'active' : ''}"
-                                onclick="tool.updateTextAlign('center')"
-                                title="Align Center"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-                                </svg>
-                            </button>
-                            <button 
-                                class="style-button ${this.selectedElement.textAlign === 'right' ? 'active' : ''}"
-                                onclick="tool.updateTextAlign('end')"
-                                title="Align Right"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        propertiesDiv.innerHTML = `
-            <div class="property-group">
-                <label class="property-label">Type</label>
-                <div>${this.selectedElement.type}</div>
-            </div>
-            ${colorControls}
-            ${textControls}
-            ${boxControls}
-            ${linkControls}
-            <div class="property-group">
-                <label class="property-label">Layer Position</label>
-                <div class="layer-controls">
-                    <button onclick="tool.moveToTop()">맨 위로</button>
-                    <button onclick="tool.moveUp()">위로</button>
-                    <button onclick="tool.moveDown()">아래로</button>
-                    <button onclick="tool.moveToBottom()">맨 아래로</button>
-                </div>
-            </div>
-            <div class="property-group">
-                <label class="property-label">Position</label>
-                <input type="number" class="property-input" value="${Math.round(this.selectedElement.x)}"
-                    onchange="tool.updateElementProperty('x', this.value)">
-                <input type="number" class="property-input" value="${Math.round(this.selectedElement.y)}"
-                    onchange="tool.updateElementProperty('y', this.value)">
-            </div>
-            <div class="property-group">
-                <label class="property-label">Size</label>
-                <input type="number" class="property-input" value="${Math.round(this.selectedElement.width)}"
-                    onchange="tool.updateElementProperty('width', this.value)">
-                <input type="number" class="property-input" value="${Math.round(this.selectedElement.height)}"
-                    onchange="tool.updateElementProperty('height', this.value)">
-            </div>
-            <div class="property-group">
-            <label class="property-label">Content</label>
-            <textarea 
-                class="property-input auto-resize" 
-                onchange="tool.updateElementProperty('content', this.value)"
-                oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"
-            >${this.selectedElement.content}</textarea>
-            </div>
-        `;
-        // textarea 자동 높이 조절 초기화
+                `
+            },
+            {
+                title: 'Position',
+                content: this.createNumberInputs({
+                    x: Math.round(this.selectedElement.x),
+                    y: Math.round(this.selectedElement.y)
+                })
+            },
+            {
+                title: 'Size',
+                content: this.createNumberInputs({
+                    width: Math.round(this.selectedElement.width),
+                    height: Math.round(this.selectedElement.height)
+                })
+            },
+            {
+                title: 'Content',
+                content: `
+                    <textarea 
+                        class="property-input auto-resize" 
+                        onchange="tool.updateElementProperty('content', this.value)"
+                        oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"
+                    >${this.selectedElement.content}</textarea>
+                `
+            }
+        ];
+    
+        // 최종 HTML 생성
+        const specialControl = specialControls[this.selectedElement.type]?.(this.selectedElement);
+        
+        const sections = [
+            ...commonSections.map(section => this.createPropertyGroup(section.title, section.content)),
+            specialControl && this.createPropertyGroup(specialControl.title, specialControl.html)
+        ].filter(Boolean);
+    
+        propertiesDiv.innerHTML = sections.join('');
+    
+        // textarea 자동 높이 조절
         const textarea = propertiesDiv.querySelector('textarea.auto-resize');
         if (textarea) {
             textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
+            textarea.style.height = `${textarea.scrollHeight}px`;
         }
+    }
+    
+    // 헬퍼 메서드들
+    createPropertyGroup(title, content) {
+        return `
+            <div class="property-group">
+                <label class="property-label">${title}</label>
+                <div>${content}</div>
+            </div>
+        `;
+    }
+    
+    createColorControl(label, value, property) {
+        return `
+            <div class="color-control">
+                <label>${label}</label>
+                <input type="color" 
+                    value="${value || '#ffffff'}"
+                    onchange="tool.updatePanelColor('${property}', this.value)">
+            </div>
+        `;
+    }
+    
+    createNumberInputs(values) {
+        return Object.entries(values)
+            .map(([key, value]) => `
+                <input type="number" 
+                    class="property-input" 
+                    value="${value}"
+                    onchange="tool.updateElementProperty('${key}', this.value)">
+            `).join('');
+    }
+    
+    createAlignButton(align, element) {
+        const icons = {
+            start: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18" /></svg>',
+            center: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>',
+            end: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3" /></svg>'
+        };
+        
+        return `
+            <button 
+                class="style-button ${element.textAlign === align ? 'active' : ''}"
+                onclick="tool.updateTextAlign('${align}')"
+                title="Align ${align}">
+                ${icons[align]}
+            </button>
+        `;
+    }
+    
+    createStickyControls(element) {
+        return `
+            <div class="sticky-controls">
+                <div class="control-group">
+                    <label>Opacity</label>
+                    <input 
+                        type="range" 
+                        min="0.1" 
+                        max="1" 
+                        step="0.1" 
+                        value="${element.opacity}"
+                        onchange="tool.updateStickyStyle('opacity', this.value)"
+                        class="opacity-slider">
+                    <span>${Math.round(element.opacity * 100)}%</span>
+                </div>
+                <div class="control-group">
+                    <label>Font Size</label>
+                    <input 
+                        type="number" 
+                        min="8" 
+                        max="72" 
+                        value="${element.fontSize}"
+                        onchange="tool.updateStickyStyle('fontSize', this.value)"
+                        class="font-size-input">
+                    <span>px</span>
+                </div>
+            </div>
+        `;
     }
 
     updateTextAlign(align) {
