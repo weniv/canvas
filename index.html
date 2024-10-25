@@ -1,83 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prototyping Tool</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-</head>
-<body>
-    <div class="toolbar">
-        <button onclick="tool.undo()">↩️ Undo</button>
-        <button onclick="tool.redo()">↪️ Redo</button>
-        <button onclick="tool.save()">💾 Save</button>
-        <button onclick="tool.load()">📂 Load</button>
-        <button onclick="tool.deleteSelected()">🗑️ Delete</button>
-        <select onchange="tool.setGridSize(this.value)">
-            <option value="0">No Grid</option>
-            <option value="10">Grid 10px</option>
-            <option value="20">Grid 20px</option>
-            <option value="50">Grid 50px</option>
-        </select>
-        <select onchange="tool.setCanvasSize(this.value)">
-            <option value="desktop">Desktop (1920x1080)</option>
-            <option value="laptop">Laptop (1366x768)</option>
-            <option value="iphone12">iPhone 12 (390x844)</option>
-            <option value="galaxy">Galaxy (412x915)</option>
-            <option value="ipad">iPad (820x1180)</option>
-            <option value="custom">Custom Size</option>
-        </select>
-        <button onclick="tool.exportAsImage()">🖼️ Export Image</button>
-        <button onclick="tool.showShortcutGuide()" title="Keyboard Shortcuts">⌨️ Shortcuts</button>
-        <button onclick="tool.togglePreviewMode()" title="Toggle Preview Mode">
-            👁️ Preview
-        </button>
-        <div class="zoom-controls">
-            <button onclick="tool.zoom(1.1, window.innerWidth/2, window.innerHeight/2)">+</button>
-            <button onclick="tool.zoom(0.9, window.innerWidth/2, window.innerHeight/2)">-</button>
-            <button onclick="tool.resetZoom()">Reset</button>
-        </div>
-        <!-- <button onclick="tool.exportAsHTML()">📄 Export HTML</button> -->
-    </div>
-
-    <div class="main-container">
-        <div class="left-panel">
-            <div class="pages-panel">
-                <div class="panel-header">
-                    <h2>Pages</h2>
-                    <button onclick="tool.addNewPage()">+ New Page</button>
-                </div>
-                <div id="pages-list" class="pages-list"></div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Prototyping Tool</title>
+        <link rel="stylesheet" href="style.css" />
+        <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+        <script src="./src/utils/analytics.js"></script>
+    </head>
+    <body>
+        <div class="toolbar">
+            <button onclick="tool.undo()">↩️ Undo</button>
+            <button onclick="tool.redo()">↪️ Redo</button>
+            <button onclick="tool.save()">💾 Save</button>
+            <button onclick="tool.load()">📂 Load</button>
+            <button onclick="tool.deleteSelected()">🗑️ Delete</button>
+            <select onchange="tool.setGridSize(this.value)">
+                <option value="0">No Grid</option>
+                <option value="10">Grid 10px</option>
+                <option value="20">Grid 20px</option>
+                <option value="50">Grid 50px</option>
+            </select>
+            <select onchange="tool.setCanvasSize(this.value)">
+                <option value="desktop">Desktop (1920x1080)</option>
+                <option value="laptop">Laptop (1366x768)</option>
+                <option value="iphone12">iPhone 12 (390x844)</option>
+                <option value="galaxy">Galaxy (412x915)</option>
+                <option value="ipad">iPad (820x1180)</option>
+                <option value="custom">Custom Size</option>
+            </select>
+            <button onclick="tool.exportAsImage()">🖼️ Export Image</button>
+            <button onclick="tool.showShortcutGuide()" title="Keyboard Shortcuts">⌨️ Shortcuts</button>
+            <button onclick="tool.togglePreviewMode()" title="Toggle Preview Mode">👁️ Preview</button>
+            <div class="zoom-controls">
+                <button onclick="tool.zoom(1.1, window.innerWidth/2, window.innerHeight/2)">+</button>
+                <button onclick="tool.zoom(0.9, window.innerWidth/2, window.innerHeight/2)">-</button>
+                <button onclick="tool.resetZoom()">Reset</button>
             </div>
-            <div class="components-panel">
-                <h2>Components</h2>
-                <button class="component-btn" data-type="button">Button</button>
-                <button class="component-btn" data-type="input">Input</button>
-                <button class="component-btn" data-type="text">Text</button>
-                <button class="component-btn" data-type="box">Box</button>
-                <button class="component-btn" data-type="sticky">Sticky Note</button>
-                <button class="component-btn" data-type="panel">Panel</button>
-                <button class="component-btn" data-type="image">Image</button>
-                <button class="component-btn" data-type="link">Link Area</button>
-                
-                <div class="layers-list">
-                    <h2>Layers</h2>
-                    <div id="layers-list"></div>
+            <!-- <button onclick="tool.exportAsHTML()">📄 Export HTML</button> -->
+        </div>
+
+        <div class="main-container">
+            <div class="left-panel">
+                <div class="pages-panel">
+                    <div class="panel-header">
+                        <h2>Pages</h2>
+                        <button onclick="tool.addNewPage()">+ New Page</button>
+                    </div>
+                    <div id="pages-list" class="pages-list"></div>
+                </div>
+                <div class="components-panel">
+                    <h2>Components</h2>
+                    <button class="component-btn" data-type="button">Button</button>
+                    <button class="component-btn" data-type="input">Input</button>
+                    <button class="component-btn" data-type="text">Text</button>
+                    <button class="component-btn" data-type="box">Box</button>
+                    <button class="component-btn" data-type="sticky">Sticky Note</button>
+                    <button class="component-btn" data-type="panel">Panel</button>
+                    <button class="component-btn" data-type="image">Image</button>
+                    <button class="component-btn" data-type="link">Link Area</button>
+
+                    <div class="layers-list">
+                        <h2>Layers</h2>
+                        <div id="layers-list"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="canvas-area">
-            <div id="canvas" class="canvas"></div>
-        </div>
-        
-        <div class="properties-panel">
-            <h2>Properties</h2>
-            <div id="properties"></div>
-        </div>
-    </div>
 
-    <script src="./prototypingTool.js"></script>
-</body>
+            <div class="canvas-area">
+                <div id="canvas" class="canvas"></div>
+            </div>
+
+            <div class="properties-panel">
+                <h2>Properties</h2>
+                <div id="properties"></div>
+            </div>
+        </div>
+
+        <script src="./prototypingTool.js"></script>
+    </body>
 </html>
