@@ -339,12 +339,14 @@ class PrototypingTool {
     // 캔버스 경계선에만 스냅하도록 단순화된 계산
     calculateSnap(x, y, width, height) {
         const canvas = document.getElementById('canvas');
-        const canvasRect = canvas.getBoundingClientRect();
+        // 실제 캔버스의 크기를 가져옵니다 (offsetWidth/Height 사용)
+        const canvasWidth = parseInt(canvas.style.width);
+        const canvasHeight = parseInt(canvas.style.height);
         
         let snappedX = x;
         let snappedY = y;
         const guides = [];
-
+    
         // 왼쪽 경계
         if (Math.abs(x) < this.snapThreshold) {
             snappedX = 0;
@@ -352,9 +354,10 @@ class PrototypingTool {
         }
         
         // 오른쪽 경계
-        if (Math.abs(x + width - canvasRect.width) < this.snapThreshold) {
-            snappedX = canvasRect.width - width;
-            guides.push({ type: 'vertical', position: canvasRect.width });
+        // 요소의 오른쪽 끝이 캔버스 오른쪽 끝과 일치하는지 확인
+        if (Math.abs(x + width - canvasWidth) < this.snapThreshold) {
+            snappedX = canvasWidth - width;
+            guides.push({ type: 'vertical', position: canvasWidth });
         }
         
         // 상단 경계
@@ -364,14 +367,15 @@ class PrototypingTool {
         }
         
         // 하단 경계
-        if (Math.abs(y + height - canvasRect.height) < this.snapThreshold) {
-            snappedY = canvasRect.height - height;
-            guides.push({ type: 'horizontal', position: canvasRect.height });
+        // 요소의 하단이 캔버스 하단과 일치하는지 확인
+        if (Math.abs(y + height - canvasHeight) < this.snapThreshold) {
+            snappedY = canvasHeight - height;
+            guides.push({ type: 'horizontal', position: canvasHeight });
         }
-
+    
         return { x: snappedX, y: snappedY, guides };
     }
-
+    
     // 요소의 스냅 포인트 계산
     getElementSnapPoints(element) {
         const points = [];
