@@ -1,5 +1,6 @@
 class PrototypingTool {
     constructor() {
+        this.checkMobileAccess();
         this.elements = [];
         this.selectedElement = null;
         this.draggedElement = null;
@@ -15,7 +16,22 @@ class PrototypingTool {
             width: 200,
             height: 150
         };
-        // 아이콘 추가 필요
+
+        // 테이블 기본 설정
+        this.tableDefaults = {
+            rows: 3,
+            cols: 3,
+            cellPadding: 8,
+            borderColor: '#dddddd',
+            headerBgColor: '#f5f5f5',
+            cellBgColor: '#ffffff',
+            textColor: '#000000',
+            fontSize: 14,
+            headerFontWeight: 'bold',
+            cellFontWeight: 'normal'
+        };
+
+        // 아이콘
         this.icons = {
             'arrow-right': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M26.0607 6.93934C26.6464 7.52513 26.6464 8.47487 26.0607 9.06066L15.1213 20L26.0607 30.9393C26.6464 31.5251 26.6464 32.4749 26.0607 33.0607C25.4749 33.6464 24.5251 33.6464 23.9393 33.0607L11.9393 21.0607C11.3536 20.4749 11.3536 19.5251 11.9393 18.9393L23.9393 6.93934C24.5251 6.35355 25.4749 6.35355 26.0607 6.93934Z" fill="currentColor"/></svg>`,
             'arrow-left': `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.9393 33.0607C13.3536 32.4749 13.3536 31.5251 13.9393 30.9393L24.8787 20L13.9393 9.06066C13.3536 8.47488 13.3536 7.52513 13.9393 6.93934C14.5251 6.35355 15.4749 6.35355 16.0607 6.93934L28.0607 18.9393C28.6464 19.5251 28.6464 20.4749 28.0607 21.0607L16.0607 33.0607C15.4749 33.6464 14.5251 33.6464 13.9393 33.0607Z" fill="currentColor"/></svg>`,
@@ -47,14 +63,18 @@ class PrototypingTool {
             '#98ff98', // 연두
             '#ffb347'  // 주황
         ];
+
+        // 페이지
         this.pages = new Map(); // 페이지 저장소
         this.currentPageId = null; // 현재 페이지 ID
     
+        // 줌과 패닝
         this.scale = 1;  // 줌 레벨
         this.isPanning = false;  // 패닝 중인지 여부
         this.lastPanPosition = { x: 0, y: 0 };  // 마지막 패닝 위치
         this.canvasOffset = { x: 0, y: 0 };  // 캔버스 오프셋
     
+        // 디바이스 프리셋
         this.devicePresets = {
             'desktop': { width: 1920, height: 1080 },
             'laptop': { width: 1366, height: 768 },
@@ -106,7 +126,33 @@ class PrototypingTool {
         }
     }
 
-    // updateCanvasTransform 함수도 수정하여 transform 원점 유지
+    // 모바일 접속 체크 메서드 추가
+    checkMobileAccess() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            const mobileOverlay = document.createElement('div');
+            mobileOverlay.className = 'mobile-overlay';
+            mobileOverlay.innerHTML = `
+                <div class="mobile-message">
+                    <h2>Mobile Device Detected</h2>
+                    <p>Sorry, this prototyping tool is currently only supported on desktop environments.</p>
+                    <p>For the best experience, please access from a desktop computer.</p>
+                    <button class="mobile-close-btn">OK</button>
+                </div>
+            `;
+
+            document.body.appendChild(mobileOverlay);
+
+            // 확인 버튼 클릭 시 오버레이 제거
+            const closeBtn = mobileOverlay.querySelector('.mobile-close-btn');
+            closeBtn.addEventListener('click', () => {
+                mobileOverlay.remove();
+            });
+        }
+    }
+
+    // transform 원점 유지
     updateCanvasTransform() {
         const canvas = document.getElementById('canvas');
         canvas.style.transform = `translate(${this.canvasOffset.x}px, ${this.canvasOffset.y}px) scale(${this.scale})`;
@@ -525,6 +571,10 @@ class PrototypingTool {
             this.showIconDialog();
             return;
         }
+        if (type === 'table') {
+            this.addTableElement();
+            return;
+        }
         const element = {
             id: Date.now(),
             type,
@@ -569,6 +619,50 @@ class PrototypingTool {
         this.selectElement(element);
         this.saveHistory();
     }
+
+    // 테이블 요소 추가 메서드
+    addTableElement() {
+        const element = {
+            id: Date.now(),
+            type: 'table',
+            x: 100,
+            y: 100,
+            width: 400,
+            height: 200,
+            name: this.generateElementName('table'),
+            rows: this.tableDefaults.rows,
+            cols: this.tableDefaults.cols,
+            data: this.generateEmptyTableData(this.tableDefaults.rows, this.tableDefaults.cols),
+            zIndex: this.maxZIndex,
+            cellPadding: this.tableDefaults.cellPadding,
+            borderColor: this.tableDefaults.borderColor,
+            headerBgColor: this.tableDefaults.headerBgColor,
+            cellBgColor: this.tableDefaults.cellBgColor,
+            textColor: this.tableDefaults.textColor,
+            fontSize: this.tableDefaults.fontSize,
+            headerFontWeight: this.tableDefaults.headerFontWeight,
+            cellFontWeight: this.tableDefaults.cellFontWeight
+        };
+
+        this.elements.push(element);
+        this.renderElement(element);
+        this.selectElement(element);
+        this.saveHistory();
+    }
+
+    // 빈 테이블 데이터 생성
+    generateEmptyTableData(rows, cols) {
+        const data = [];
+        for (let i = 0; i < rows; i++) {
+            const row = [];
+            for (let j = 0; j < cols; j++) {
+                row.push(i === 0 ? `Header ${j + 1}` : `Cell ${i},${j + 1}`);
+            }
+            data.push(row);
+        }
+        return data;
+    }
+
 
     showIconDialog() {
         const dialog = document.createElement('div');
@@ -963,7 +1057,58 @@ class PrototypingTool {
                     style: 'width:100%;height:100%;border:none;padding:4px;'
                 });
                 return input;
+            },
+
+            table: () => {
+                // 드래그 중이면 기존 테이블을 유지
+                const elementDiv = document.getElementById(`element-${element.id}`);
+                if (elementDiv && this.draggedElement === element) {
+                    const existingContainer = elementDiv.querySelector('.table-container');
+                    if (existingContainer) {
+                        return existingContainer;
+                    }
+                }
+            
+                const container = document.createElement('div');
+                container.className = 'table-container';
+                container.style.width = '100%';
+                container.style.height = '100%';
+                container.style.overflow = 'auto';
+            
+                const table = document.createElement('table');
+                table.style.width = '100%';
+                table.style.borderCollapse = 'collapse';
+                table.style.fontSize = `${element.fontSize}px`;
+                table.style.color = element.textColor;
+            
+                // 데이터를 사용하여 테이블 생성
+                element.data.forEach((rowData, i) => {
+                    const row = document.createElement('tr');
+                    rowData.forEach((cellData, j) => {
+                        const cell = document.createElement(i === 0 ? 'th' : 'td');
+                        cell.textContent = cellData;
+                        cell.style.padding = `${element.cellPadding}px`;
+                        cell.style.border = `1px solid ${element.borderColor}`;
+                        cell.style.backgroundColor = i === 0 ? element.headerBgColor : element.cellBgColor;
+                        cell.style.fontWeight = i === 0 ? element.headerFontWeight : element.cellFontWeight;
+                        
+                        // 셀 편집 이벤트 리스너
+                        cell.addEventListener('dblclick', (e) => {
+                            if (!this.previewMode) {
+                                e.stopPropagation();
+                                this.startEditingTableCell(element, i, j, e.target);
+                            }
+                        });
+                        
+                        row.appendChild(cell);
+                    });
+                    table.appendChild(row);
+                });
+            
+                container.appendChild(table);
+                return container;
             }
+            
         };
     
         // 요소 타입별 콘텐츠 생성 및 추가
@@ -1061,6 +1206,50 @@ class PrototypingTool {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 editableDiv.blur();
+            }
+        });
+    }
+
+    startEditingTableCell(tableElement, row, col, cellElement) {
+        // 이미 편집 중인지 확인
+        if (cellElement.querySelector('input')) return;
+    
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = tableElement.data[row][col];
+        input.style.width = '100%';
+        input.style.height = '100%';
+        input.style.padding = `${tableElement.cellPadding}px`;
+        input.style.border = 'none';
+        input.style.backgroundColor = 'white';
+        input.style.fontSize = `${tableElement.fontSize}px`;
+        input.style.fontWeight = row === 0 ? tableElement.headerFontWeight : tableElement.cellFontWeight;
+    
+        const originalContent = cellElement.textContent;
+        cellElement.textContent = '';
+        cellElement.appendChild(input);
+        input.focus();
+    
+        const finishEditing = (save) => {
+            if (!cellElement.contains(input)) return; // 이미 제거됐는지 확인
+            
+            const newValue = input.value;
+            if (save) {
+                tableElement.data[row][col] = newValue;
+                cellElement.textContent = newValue;
+                this.saveHistory();
+            } else {
+                cellElement.textContent = originalContent;
+            }
+        };
+    
+        input.addEventListener('blur', () => finishEditing(true));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                input.blur();
+            } else if (e.key === 'Escape') {
+                finishEditing(false);
             }
         });
     }
@@ -1163,11 +1352,9 @@ class PrototypingTool {
 
     startDragging(e, element) {
         this.draggedElement = element;
-        const rect = document.getElementById(`element-${element.id}`).getBoundingClientRect();
         const canvas = document.getElementById('canvas');
         const canvasRect = canvas.getBoundingClientRect();
         
-        // 캔버스의 transform을 고려한 offset 계산
         this.offset = {
             x: ((e.clientX - canvasRect.left - this.canvasOffset.x) / this.scale) - element.x,
             y: ((e.clientY - canvasRect.top - this.canvasOffset.y) / this.scale) - element.y
@@ -1191,17 +1378,14 @@ class PrototypingTool {
         const canvas = document.getElementById('canvas');
         const rect = canvas.getBoundingClientRect();
         
-        // 캔버스의 transform을 고려한 마우스 위치 계산
         let x = (e.clientX - rect.left - this.canvasOffset.x) / this.scale - this.offset.x;
         let y = (e.clientY - rect.top - this.canvasOffset.y) / this.scale - this.offset.y;
     
-        // 그리드 스냅 (기존 기능 유지)
         if (this.gridSize > 0) {
             x = Math.round(x / this.gridSize) * this.gridSize;
             y = Math.round(y / this.gridSize) * this.gridSize;
         }
     
-        // 경계선 스냅
         if (this.snapEnabled) {
             const snapResult = this.calculateSnap(
                 x, 
@@ -1212,17 +1396,17 @@ class PrototypingTool {
             x = snapResult.x;
             y = snapResult.y;
             
-            // 가이드라인 표시
             this.showSnapGuides(snapResult.guides);
         }
     
-        // 요소 위치 업데이트
         this.draggedElement.x = Math.max(0, x);
         this.draggedElement.y = Math.max(0, y);
     
         const elementDiv = document.getElementById(`element-${this.draggedElement.id}`);
-        elementDiv.style.left = `${this.draggedElement.x}px`;
-        elementDiv.style.top = `${this.draggedElement.y}px`;
+        if (elementDiv) {
+            elementDiv.style.left = `${this.draggedElement.x}px`;
+            elementDiv.style.top = `${this.draggedElement.y}px`;
+        }
     
         this.updateProperties();
     }
@@ -1526,6 +1710,72 @@ class PrototypingTool {
                         </div>
                     </div>
                 `
+            }),
+
+            table: (element) => ({
+                title: 'Table Style',
+                html: `
+                    <div class="table-controls">
+                        <div class="control-group">
+                            <label>Rows</label>
+                            <input type="number" 
+                                min="1" 
+                                max="20" 
+                                value="${element.rows}"
+                                onchange="tool.updateTableStructure(this.value, 'rows')">
+                        </div>
+                        <div class="control-group">
+                            <label>Columns</label>
+                            <input type="number" 
+                                min="1" 
+                                max="10" 
+                                value="${element.cols}"
+                                onchange="tool.updateTableStructure(this.value, 'cols')">
+                        </div>
+                        <div class="control-group">
+                            <label>Cell Padding</label>
+                            <input type="number"
+                                min="0"
+                                max="20"
+                                value="${element.cellPadding}"
+                                onchange="tool.updateTableStyle('cellPadding', this.value)">
+                        </div>
+                        <div class="control-group">
+                            <label>Font Size</label>
+                            <input type="number"
+                                min="8"
+                                max="24"
+                                value="${element.fontSize}"
+                                onchange="tool.updateTableStyle('fontSize', this.value)">
+                        </div>
+                        <div class="color-controls">
+                            <div class="color-control">
+                                <label>Border Color</label>
+                                <input type="color" 
+                                    value="${element.borderColor}"
+                                    onchange="tool.updateTableStyle('borderColor', this.value)">
+                            </div>
+                            <div class="color-control">
+                                <label>Header Background</label>
+                                <input type="color" 
+                                    value="${element.headerBgColor}"
+                                    onchange="tool.updateTableStyle('headerBgColor', this.value)">
+                            </div>
+                            <div class="color-control">
+                                <label>Cell Background</label>
+                                <input type="color" 
+                                    value="${element.cellBgColor}"
+                                    onchange="tool.updateTableStyle('cellBgColor', this.value)">
+                            </div>
+                            <div class="color-control">
+                                <label>Text Color</label>
+                                <input type="color" 
+                                    value="${element.textColor}"
+                                    onchange="tool.updateTableStyle('textColor', this.value)">
+                            </div>
+                        </div>
+                    </div>
+                `
             })
         };
     
@@ -1588,6 +1838,167 @@ class PrototypingTool {
             textarea.style.height = 'auto';
             textarea.style.height = `${textarea.scrollHeight}px`;
         }
+    }
+
+    // 테이블 구조 업데이트 메서드
+    updateTableStructure(value, type) {
+        if (!this.selectedElement || this.selectedElement.type !== 'table') return;
+        
+        const newValue = parseInt(value);
+        if (isNaN(newValue) || newValue < 1) return;
+        
+        const element = this.selectedElement;
+        
+        // 기존 데이터를 복사
+        const oldData = JSON.parse(JSON.stringify(element.data));
+        let newData = [];
+        
+        if (type === 'rows') {
+            element.rows = newValue;
+            // 행 수 조정
+            for (let i = 0; i < newValue; i++) {
+                if (i < oldData.length) {
+                    // 기존 행 유지
+                    newData.push(oldData[i]);
+                } else {
+                    // 새 행 추가
+                    const newRow = [];
+                    for (let j = 0; j < element.cols; j++) {
+                        newRow.push(`Cell ${i},${j + 1}`);
+                    }
+                    newData.push(newRow);
+                }
+            }
+        } else if (type === 'cols') {
+            element.cols = newValue;
+            // 열 수 조정
+            for (let i = 0; i < element.rows; i++) {
+                const newRow = [];
+                const oldRow = oldData[i] || [];
+                
+                for (let j = 0; j < newValue; j++) {
+                    if (j < oldRow.length) {
+                        // 기존 열 데이터 유지
+                        newRow.push(oldRow[j]);
+                    } else {
+                        // 새 열 데이터 추가
+                        newRow.push(i === 0 ? `Header ${j + 1}` : `Cell ${i},${j + 1}`);
+                    }
+                }
+                newData.push(newRow);
+            }
+        }
+        
+        // 새 데이터로 업데이트
+        element.data = newData;
+        
+        // 테이블 재렌더링
+        const elementDiv = document.getElementById(`element-${element.id}`);
+        if (elementDiv) {
+            const oldContainer = elementDiv.querySelector('.table-container');
+            if (oldContainer) {
+                elementDiv.removeChild(oldContainer);
+            }
+            
+            // 테이블 컨테이너 새로 생성
+            const container = document.createElement('div');
+            container.className = 'table-container';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.overflow = 'auto';
+    
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            table.style.fontSize = `${element.fontSize}px`;
+            table.style.color = element.textColor;
+    
+            element.data.forEach((rowData, i) => {
+                const row = document.createElement('tr');
+                rowData.forEach((cellData, j) => {
+                    const cell = document.createElement(i === 0 ? 'th' : 'td');
+                    cell.textContent = cellData;
+                    cell.style.padding = `${element.cellPadding}px`;
+                    cell.style.border = `1px solid ${element.borderColor}`;
+                    cell.style.backgroundColor = i === 0 ? element.headerBgColor : element.cellBgColor;
+                    cell.style.fontWeight = i === 0 ? element.headerFontWeight : element.cellFontWeight;
+                    
+                    // 셀 편집 이벤트 리스너 추가
+                    cell.addEventListener('dblclick', (e) => {
+                        if (!this.previewMode) {
+                            e.stopPropagation();
+                            this.startEditingTableCell(element, i, j, e.target);
+                        }
+                    });
+                    
+                    row.appendChild(cell);
+                });
+                table.appendChild(row);
+            });
+    
+            container.appendChild(table);
+            elementDiv.appendChild(container);
+        }
+        
+        this.saveHistory();
+        this.updateProperties();
+    }
+    
+
+    // 테이블 스타일 업데이트 메서드
+    updateTableStyle(property, value) {
+        if (!this.selectedElement || this.selectedElement.type !== 'table') return;
+        
+        const element = this.selectedElement;
+        
+        // 숫자 값에 대한 처리
+        if (['cellPadding', 'fontSize'].includes(property)) {
+            element[property] = parseInt(value);
+        } else {
+            element[property] = value;
+        }
+        
+        // 테이블 직접 업데이트
+        const elementDiv = document.getElementById(`element-${element.id}`);
+        if (elementDiv) {
+            const table = elementDiv.querySelector('table');
+            if (table) {
+                // 테이블 전체 스타일 업데이트
+                if (property === 'fontSize') {
+                    table.style.fontSize = `${value}px`;
+                } else if (property === 'textColor') {
+                    table.style.color = value;
+                }
+    
+                // 셀별 스타일 업데이트
+                const cells = table.querySelectorAll('th, td');
+                cells.forEach((cell, index) => {
+                    const isHeader = cell.tagName.toLowerCase() === 'th';
+                    
+                    switch(property) {
+                        case 'cellPadding':
+                            cell.style.padding = `${value}px`;
+                            break;
+                        case 'borderColor':
+                            cell.style.border = `1px solid ${value}`;
+                            break;
+                        case 'headerBgColor':
+                            if (isHeader) {
+                                cell.style.backgroundColor = value;
+                            }
+                            break;
+                        case 'cellBgColor':
+                            if (!isHeader) {
+                                cell.style.backgroundColor = value;
+                            }
+                            break;
+                    }
+                });
+            }
+        }
+        
+        this.saveHistory();
+        this.updateProperties();
     }
 
     // PrototypingTool 클래스에 추가
