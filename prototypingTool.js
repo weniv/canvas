@@ -87,8 +87,14 @@ class PrototypingTool {
         this.snapThreshold = 9; // 스냅이 작동할 거리 (픽셀)
         this.snapEnabled = true; // 스냅 기능 활성화 여부
     
-        this.loremText = "Lorem ipsum dolor sit amet..."; // 생략
-        this.loremVariants = { /* ... */ }; // 생략
+        this.loremText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
+        
+        // 다양한 길이의 로렘 입숨
+        this.loremVariants = {
+            short: "Lorem ipsum dolor sit amet.",
+            medium: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+            long: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+        };
     
         // 첫 페이지 생성
         this.createPage('Home');
