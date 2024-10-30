@@ -1789,10 +1789,10 @@ class PrototypingTool {
                 title: 'Layer Position',
                 content: `
                     <div class="layer-controls">
-                        <button onclick="tool.moveToTop()">맨 위로</button>
-                        <button onclick="tool.moveUp()">위로</button>
-                        <button onclick="tool.moveDown()">아래로</button>
-                        <button onclick="tool.moveToBottom()">맨 아래로</button>
+                        <button onclick="tool.moveToTop()">To Top</button>
+                        <button onclick="tool.moveUp()">Up</button>
+                        <button onclick="tool.moveToBottom()">To Bottom</button>
+                        <button onclick="tool.moveDown()">Down</button>
                     </div>
                 `
             },
