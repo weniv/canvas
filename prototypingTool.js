@@ -158,13 +158,6 @@ class PrototypingTool {
         }
     }
 
-    // transform 원점 유지
-    updateCanvasTransform() {
-        const canvas = document.getElementById('canvas');
-        canvas.style.transform = `translate(${this.canvasOffset.x}px, ${this.canvasOffset.y}px) scale(${this.scale})`;
-        canvas.style.transformOrigin = '0 0';
-    }
-
     createPage(pageName) {
         const pageId = Date.now();
         const page = {
@@ -369,17 +362,6 @@ class PrototypingTool {
     resetZoom() {
         this.scale = 1;
         this.canvasOffset = { x: 0, y: 0 };
-        this.updateCanvasTransform();
-    }
-    
-    handlePan = (e) => {
-        const dx = e.clientX - this.lastPanPosition.x;
-        const dy = e.clientY - this.lastPanPosition.y;
-    
-        this.canvasOffset.x += dx;
-        this.canvasOffset.y += dy;
-    
-        this.lastPanPosition = { x: e.clientX, y: e.clientY };
         this.updateCanvasTransform();
     }
     
@@ -2261,16 +2243,6 @@ class PrototypingTool {
         
         this.saveHistory();
         this.updateProperties();
-    }
-
-    updateBoxColor(color) {
-        if (!this.selectedElement || this.selectedElement.type !== 'box') return;
-        
-        this.selectedElement.backgroundColor = color;
-        const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
-        elementDiv.style.backgroundColor = color;
-        
-        this.saveHistory();
     }
 
     updateStickyColor(color) {
