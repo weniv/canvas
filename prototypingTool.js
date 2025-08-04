@@ -127,13 +127,6 @@ class PrototypingTool {
         this.loremText =
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
-        // 다양한 길이의 로렘 입숨
-        this.loremVariants = {
-            short: "Lorem ipsum dolor sit amet.",
-            medium: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-            long: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
-        };
-
         // 첫 페이지 생성
         this.createPage("Home");
 
@@ -975,8 +968,16 @@ class PrototypingTool {
 
         document.addEventListener("keydown", (e) => {
             // 요소가 선택된 상태에서의 키 이벤트
-            // Backspace 또는 Delete 키로 선택된 요소 삭제
-            if (e.key === "Delete" || e.key === "Backspace") {
+
+            // 편집 가능한 요소 체크 (텍스트 입력 중인지 확인)
+            const isEditableElement =
+                ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName) ||
+                document.activeElement.isContentEditable ||
+                document.activeElement.contentEditable === "true" ||
+                document.activeElement.classList.contains("editable-text");
+
+            // Backspace 또는 Delete 키로 선택된 요소 삭제 (편집 중이 아닐 때만)
+            if ((e.key === "Delete" || e.key === "Backspace") && !isEditableElement) {
                 if (this.selectedElements.length > 0) {
                     // 다중 선택된 요소들 삭제
                     this.deleteMultipleElements();
@@ -989,8 +990,8 @@ class PrototypingTool {
             }
 
             if (this.selectedElement) {
-                // 방향키 처리
-                if (ARROW_KEYS.has(e.key)) {
+                // 방향키 처리 (입력 필드가 포커스되어 있지 않을 때만)
+                if (ARROW_KEYS.has(e.key) && !isEditableElement) {
                     e.preventDefault();
                     const moveAmount = e.shiftKey ? 10 : 1;
                     const elementDiv = document.getElementById(`element-${this.selectedElement.id}`);
@@ -1033,6 +1034,12 @@ class PrototypingTool {
 
     initializeZoomAndPan() {
         const canvasArea = document.querySelector(".canvas-area");
+
+        // 초기 커서 설정
+        const canvasAreaElement = document.querySelector(".canvas-area");
+        if (canvasAreaElement) {
+            canvasAreaElement.style.cursor = "default";
+        }
 
         // 터치 이벤트 변수
         let isTouchPanning = false;
@@ -1131,7 +1138,7 @@ class PrototypingTool {
         canvasArea.addEventListener(
             "wheel",
             (e) => {
-                if (e.ctrlKey) {
+                if (e.ctrlKey || e.metaKey) {
                     e.preventDefault();
                     e.stopPropagation();
 
@@ -1166,7 +1173,7 @@ class PrototypingTool {
             if (e.code === "Space" && !isSpacePressed && !isEditableElement) {
                 isSpacePressed = true;
                 canvasArea.classList.add("panning");
-                document.body.style.cursor = "grab";
+                canvasArea.style.cursor = "grab";
                 this.isPanning = true;
             }
         });
@@ -1175,7 +1182,7 @@ class PrototypingTool {
             if (e.code === "Space") {
                 isSpacePressed = false;
                 canvasArea.classList.remove("panning");
-                document.body.style.cursor = "default";
+                canvasArea.style.cursor = "default";
                 this.isPanning = false;
             }
         });
@@ -1191,7 +1198,7 @@ class PrototypingTool {
                 e.preventDefault();
                 isPanningActive = true;
                 canvasArea.classList.add("panning");
-                document.body.style.cursor = "grabbing";
+                canvasArea.style.cursor = "grabbing";
                 this.lastPanPosition = { x: e.clientX, y: e.clientY };
             }
         });
@@ -1260,9 +1267,9 @@ class PrototypingTool {
             if (isPanningActive) {
                 isPanningActive = false;
                 if (this.isPanning) {
-                    document.body.style.cursor = "grab";
+                    canvasArea.style.cursor = "grab";
                 } else {
-                    document.body.style.cursor = "default";
+                    canvasArea.style.cursor = "default";
                     canvasArea.classList.remove("panning");
                 }
             }
@@ -1969,6 +1976,9 @@ class PrototypingTool {
 
     // 텍스트 배치 모드 시작
     startTextPlacement() {
+        // 기존 이벤트 리스너 정리 (안전을 위해)
+        this.cancelTextPlacement();
+
         // 텍스트 버튼 활성화
         const textBtn = document.getElementById("text-btn");
         if (textBtn) {
@@ -2051,10 +2061,10 @@ class PrototypingTool {
         e.preventDefault();
         e.stopPropagation();
 
-        // 캔버스 좌표 계산
+        // 캔버스 좌표 계산 (마우스 클릭 위치 그대로 사용)
         const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left - this.canvasOffset.x) / this.scale;
-        const y = (e.clientY - rect.top - this.canvasOffset.y) / this.scale;
+        const x = (e.clientX - rect.left) / this.scale;
+        const y = (e.clientY - rect.top) / this.scale;
 
         // 텍스트 요소 생성
         this.createTextElement(x, y);
@@ -3506,22 +3516,6 @@ class PrototypingTool {
             }
         });
 
-        // lorem 감지 및 변환을 위한 입력 이벤트
-        editableDiv.addEventListener("input", (e) => {
-            const text = e.target.textContent.trim().toLowerCase();
-
-            // lorem 변형들 감지
-            if (text === "lorem") {
-                e.target.textContent = this.loremVariants.medium;
-            } else if (text === "1lorem" || text === ".lorem") {
-                e.target.textContent = this.loremVariants.short;
-            } else if (text === "2lorem" || text === "..lorem") {
-                e.target.textContent = this.loremVariants.medium;
-            } else if (text === "3lorem" || text === "...lorem") {
-                e.target.textContent = this.loremVariants.long;
-            }
-        });
-
         // 편집 완료 처리
         const finishEditing = () => {
             const newText = editableDiv.textContent;
@@ -4342,12 +4336,14 @@ class PrototypingTool {
                     <div class="coordinate-input">
                         <label>X</label>
                         <input type="number" value="${Math.round(element.x)}" 
-                            onchange="tool.updateElementProperty('x', this.value)">
+                            onchange="tool.updateElementProperty('x', this.value)"
+                            onkeydown="tool.handleNumberInputKeydown(event, 'x', this)">
                     </div>
                     <div class="coordinate-input">
                         <label>Y</label>
                         <input type="number" value="${Math.round(element.y)}"
-                            onchange="tool.updateElementProperty('y', this.value)">
+                            onchange="tool.updateElementProperty('y', this.value)"
+                            onkeydown="tool.handleNumberInputKeydown(event, 'y', this)">
                     </div>
                 </div>
                 <div class="alignment-buttons">
@@ -4402,12 +4398,14 @@ class PrototypingTool {
                     <div class="coordinate-input">
                         <label>W</label>
                         <input type="number" value="${Math.round(element.width)}"
-                            onchange="tool.updateElementProperty('width', this.value)">
+                            onchange="tool.updateElementProperty('width', this.value)"
+                            onkeydown="tool.handleNumberInputKeydown(event, 'width', this)">
                     </div>
                     <div class="coordinate-input">
                         <label>H</label>
                         <input type="number" value="${Math.round(element.height)}"
-                            onchange="tool.updateElementProperty('height', this.value)">
+                            onchange="tool.updateElementProperty('height', this.value)"
+                            onkeydown="tool.handleNumberInputKeydown(event, 'height', this)">
                     </div>
                 </div>
             </div>
@@ -4476,7 +4474,8 @@ class PrototypingTool {
                         </select>
                         <input type="number" class="stroke-width" 
                             value="${element.borderWidth || 1}" min="0"
-                            onchange="tool.updateElementProperty('borderWidth', this.value)">
+                            onchange="tool.updateElementProperty('borderWidth', this.value)"
+                            onkeydown="tool.handleNumberInputKeydown(event, 'borderWidth', this)">
                     </div>
                 </div>
             </div>
@@ -5037,10 +5036,50 @@ class PrototypingTool {
                 <input type="number" 
                     class="property-input" 
                     value="${value}"
-                    onchange="tool.updateElementProperty('${key}', this.value)">
+                    onchange="tool.updateElementProperty('${key}', this.value)"
+                    onkeydown="tool.handleNumberInputKeydown(event, '${key}', this)">
             `
             )
             .join("");
+    }
+
+    handleNumberInputKeydown(event, property, inputElement) {
+        // 화살표 키 이벤트 처리
+        if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+            event.preventDefault(); // 기본 동작 방지
+            event.stopPropagation(); // 이벤트 전파 차단
+
+            // 현재 포커스된 요소가 전달된 inputElement와 같은지 확인
+            if (document.activeElement !== inputElement) {
+                return;
+            }
+
+            const currentValue = parseInt(inputElement.value) || 0;
+            const newValue = event.key === "ArrowUp" ? currentValue + 1 : currentValue - 1;
+
+            // 입력 필드 값 업데이트
+            inputElement.value = newValue;
+
+            // 요소 속성만 직접 업데이트 (프로퍼티 패널 재렌더링 방지)
+            if (this.selectedElement) {
+                const element = this.selectedElement;
+                const elementDiv = document.getElementById(`element-${element.id}`);
+
+                // 요소 속성 업데이트
+                element[property] = newValue;
+
+                // DOM 업데이트
+                if (property === "x") elementDiv.style.left = `${newValue}px`;
+                if (property === "y") elementDiv.style.top = `${newValue}px`;
+                if (property === "width") elementDiv.style.width = `${newValue}px`;
+                if (property === "height") elementDiv.style.height = `${newValue}px`;
+                if (property === "borderWidth") this.applyBorderStyle(element, elementDiv);
+                if (property === "fontSize") elementDiv.style.fontSize = `${newValue}px`;
+
+                // 히스토리 저장
+                this.saveHistory();
+            }
+        }
     }
 
     createAlignButton(align, element) {
@@ -5083,6 +5122,7 @@ class PrototypingTool {
                         max="72" 
                         value="${element.fontSize}"
                         onchange="tool.updateStickyStyle('fontSize', this.value)"
+                        onkeydown="tool.handleNumberInputKeydown(event, 'fontSize', this)"
                         class="font-size-input">
                     <span>px</span>
                 </div>
@@ -5249,14 +5289,32 @@ class PrototypingTool {
         switch (property) {
             case "backgroundColor":
                 element.backgroundColor = value;
-                elementDiv.style.backgroundColor = value;
-                // 삼각형인 경우 SVG fill 색상 업데이트
-                if (element.type === "shape" && element.shapeType === "triangle") {
-                    const svg = elementDiv.querySelector("svg");
-                    if (svg) {
-                        const path = svg.querySelector("path");
-                        if (path) {
-                            path.setAttribute("fill", value);
+
+                // 테이블인 경우 제목 행에만 배경색 적용
+                if (element.type === "table") {
+                    const table = elementDiv.querySelector("table");
+                    if (table) {
+                        const headerCells = table.querySelectorAll("th");
+                        headerCells.forEach((cell) => {
+                            cell.style.backgroundColor = value;
+                        });
+                    }
+                } else if (element.type === "panel") {
+                    // 패널인 경우 패널 내용 부분에만 배경색 적용
+                    const panelContent = elementDiv.querySelector(".panel-content");
+                    if (panelContent) {
+                        panelContent.style.backgroundColor = value;
+                    }
+                } else {
+                    elementDiv.style.backgroundColor = value;
+                    // 삼각형인 경우 SVG fill 색상 업데이트
+                    if (element.type === "shape" && element.shapeType === "triangle") {
+                        const svg = elementDiv.querySelector("svg");
+                        if (svg) {
+                            const path = svg.querySelector("path");
+                            if (path) {
+                                path.setAttribute("fill", value);
+                            }
                         }
                     }
                 }
@@ -5959,13 +6017,6 @@ class PrototypingTool {
                                 <span class="key">B</span>
                             </div>
                         </div>
-                        <div class="shortcut-item">
-                            <span>Multi-line Text</span>
-                            <div class="shortcut-keys">
-                                <span class="key">Shift</span>
-                                <span class="key">Enter</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
     
@@ -5992,43 +6043,11 @@ class PrototypingTool {
                                 <span class="key">→</span>
                             </div>
                         </div>
-                        <div class="shortcut-item">
-                            <span>Free Resize Image <small>(Release aspect ratio)</small></span>
-                            <div class="shortcut-keys">
-                                <span class="key">Shift</span>
-                                <span class="key">+ Drag</span>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
     
-                <div class="shortcut-section">
-                    <h3>Quick Text</h3>
-                    <div class="shortcut-list">
-                        <div class="shortcut-item">
-                            <span>Medium Lorem Ipsum</span>
-                            <div class="shortcut-keys">
-                                <span class="key">lorem</span>
-                            </div>
-                        </div>
-                        <div class="shortcut-item">
-                            <span>Short/Medium/Long Lorem</span>
-                            <div class="shortcut-keys">
-                                <span class="key">1lorem</span>
-                                <span class="key">2lorem</span>
-                                <span class="key">3lorem</span>
-                            </div>
-                        </div>
-                        <div class="shortcut-item">
-                            <span>Alternative Short/Medium/Long</span>
-                            <div class="shortcut-keys">
-                                <span class="key">.lorem</span>
-                                <span class="key">..lorem</span>
-                                <span class="key">...lorem</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
     
             </div>
         `;
