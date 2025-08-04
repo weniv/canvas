@@ -1,112 +1,486 @@
 <!DOCTYPE html>
 <html lang="ko">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
         <!-- 기본 메타 태그 -->
         <title>Weniv Canvas | 위니브 캔버스 - 손쉬운 프로토타이핑 툴</title>
-        <meta name="description" content="위니브 캔버스로 웹과 앱 디자인을 쉽고 빠르게 프로토타이핑 하세요. 직관적인 인터페이스로 누구나 쉽게 사용할 수 있습니다.">
-        
+        <meta name="description" content="위니브 캔버스로 웹과 앱 디자인을 쉽고 빠르게 프로토타이핑 하세요. 직관적인 인터페이스로 누구나 쉽게 사용할 수 있습니다." />
+
         <!-- Open Graph 메타 태그 -->
-        <meta property="og:type" content="website">
-        <meta property="og:title" content="위니브 캔버스 - 손쉬운 프로토타이핑 툴 | Weniv Canvas">
-        <meta property="og:description" content="직관적인 디자인 툴로 여러분의 웹, 앱 아이디어를 빠르게 구체화 하세요. 드래그 앤 드롭으로 쉽게 디자인하고 공유할 수 있습니다.">
-        <meta property="og:image" content="https://canvas.weniv.co.kr/og-image.png">
-        <meta property="og:url" content="https://canvas.weniv.co.kr">
-        <meta property="og:site_name" content="Weniv Canvas">
-        
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="위니브 캔버스 - 손쉬운 프로토타이핑 툴 | Weniv Canvas" />
+        <meta property="og:description" content="직관적인 디자인 툴로 여러분의 웹, 앱 아이디어를 빠르게 구체화 하세요. 드래그 앤 드롭으로 쉽게 디자인하고 공유할 수 있습니다." />
+        <meta property="og:image" content="https://canvas.weniv.co.kr/og-image.png" />
+        <meta property="og:url" content="https://canvas.weniv.co.kr" />
+        <meta property="og:site_name" content="Weniv Canvas" />
+
         <!-- Twitter 카드 -->
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="위니브 캔버스 - 손쉬운 프로토타이핑 툴">
-        <meta name="twitter:description" content="직관적인 디자인 툴로 여러분의 웹, 앱 아이디어를 빠르게 구체화 하세요. 드래그 앤 드롭으로 쉽게 디자인하고 공유할 수 있습니다.">
-        <meta name="twitter:image" content="https://canvas.weniv.co.kr/og-image.png">
-        
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="위니브 캔버스 - 손쉬운 프로토타이핑 툴" />
+        <meta name="twitter:description" content="직관적인 디자인 툴로 여러분의 웹, 앱 아이디어를 빠르게 구체화 하세요. 드래그 앤 드롭으로 쉽게 디자인하고 공유할 수 있습니다." />
+        <meta name="twitter:image" content="https://canvas.weniv.co.kr/og-image.png" />
+
         <!-- 추가 메타 태그 -->
-        <meta name="keywords" content="위니브, weniv, 프로토타이핑, 프로토타입, UI 디자인, UX 디자인, 웹디자인, 디자인툴, 캔버스">
-        <meta name="author" content="Weniv">
-        <meta name="robots" content="index, follow">
-        
+        <meta name="keywords" content="위니브, weniv, 프로토타이핑, 프로토타입, UI 디자인, UX 디자인, 웹디자인, 디자인툴, 캔버스" />
+        <meta name="author" content="Weniv" />
+        <meta name="robots" content="index, follow" />
+
         <!-- 캐노니컬 URL -->
-        <link rel="canonical" href="https://canvas.weniv.co.kr">
-        
+        <link rel="canonical" href="https://canvas.weniv.co.kr" />
+
         <!-- 파비콘 -->
-        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link rel="icon" type="image/x-icon" href="favicon.ico" />
 
         <link rel="stylesheet" href="style.css" />
         <script src="./src/utils/analytics.js"></script>
         <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     </head>
     <body>
-        <div class="toolbar">
-            <button onclick="tool.undo()">↩️ Undo</button>
-            <button onclick="tool.redo()">↪️ Redo</button>
-            <button onclick="tool.save()">💾 Save</button>
-            <button onclick="tool.load()">📂 Load</button>
-            <button onclick="tool.deleteSelected()">🗑️ Delete</button>
-            <select onchange="tool.setGridSize(this.value)">
-                <option value="0">No Grid</option>
-                <option value="10">Grid 10px</option>
-                <option value="20">Grid 20px</option>
-                <option value="50">Grid 50px</option>
-            </select>
-            <select onchange="tool.setCanvasSize(this.value)">
-                <option value="desktop">Desktop (1920x1080)</option>
-                <option value="laptop">Laptop (1366x768)</option>
-                <option value="iphone12">iPhone 12 (390x844)</option>
-                <option value="galaxy">Galaxy (412x915)</option>
-                <option value="ipad">iPad (820x1180)</option>
-                <option value="custom">Custom Size</option>
-            </select>
-            <button onclick="tool.exportAsImage()">🖼️ Export Image</button>
-            <button onclick="tool.showShortcutGuide()" title="Keyboard Shortcuts">⌨️ Shortcuts</button>
-            <button onclick="tool.togglePreviewMode()" title="Toggle Preview Mode">👁️ Link Preview</button>
-            <div class="zoom-controls">
-                <button onclick="tool.zoom(1.1, window.innerWidth/2, window.innerHeight/2)">+</button>
-                <button onclick="tool.zoom(0.9, window.innerWidth/2, window.innerHeight/2)">-</button>
-                <button onclick="tool.resetZoom()">Reset</button>
+        <!-- 헤더 -->
+        <header class="header" role="banner">
+            <h1>
+                <img src="./src/images/weniv-canvas.svg" alt="위니브 캔버스" />
+            </h1>
+            <div class="header-controls">
+                <div class="dropdown-container">
+                    <button class="header-btn shortcuts-btn help-button" id="shortcuts-btn" aria-label="단축키 안내" aria-haspopup="true" aria-expanded="false">
+                        <img src="./src/images/icon-help-circle.svg" alt="" aria-hidden="true" />
+                    </button>
+                    <div class="dropdown-menu shortcuts-dropdown help-options" id="shortcuts-dropdown" role="menu" style="display: none">
+                        <div class="shortcut-group">
+                            <h3>캔버스 탐색</h3>
+                            <div class="shortcut-item">
+                                <span>캔버스 이동</span>
+                                <div class="keys">Space + 드래그</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>확대/축소</span>
+                                <div class="keys">⌘ + 스크롤</div>
+                            </div>
+                        </div>
+                        <div class="shortcut-group">
+                            <h3>일반</h3>
+                            <div class="shortcut-item">
+                                <span>복사</span>
+                                <div class="keys">⌘ + C</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>붙여넣기</span>
+                                <div class="keys">⌘ + V</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>실행 취소</span>
+                                <div class="keys">⌘ + Z</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>다시 실행</span>
+                                <div class="keys">⌘ + Y</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>삭제</span>
+                                <div class="keys">Del</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>완료</span>
+                                <div class="keys">Enter</div>
+                            </div>
+                        </div>
+                        <div class="shortcut-group">
+                            <h3>텍스트 편집</h3>
+                            <div class="shortcut-item">
+                                <span>텍스트 굵게</span>
+                                <div class="keys">⌘ + B</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>여러 줄 입력</span>
+                                <div class="keys">Shift + Enter</div>
+                            </div>
+                        </div>
+                        <div class="shortcut-group">
+                            <h3>이동 및 크기 조정</h3>
+                            <div class="shortcut-item">
+                                <span>1px씩 이동</span>
+                                <div class="keys">↑ ↓ ← →</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>10px씩 이동</span>
+                                <div class="keys">Shift + ↑ ↓ ← →</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>자유 크기 조정</span>
+                                <div class="keys">Shift + 드래그</div>
+                            </div>
+                        </div>
+                        <div class="shortcut-group">
+                            <h3>빠른 텍스트 입력</h3>
+                            <div class="shortcut-item">
+                                <span>샘플 텍스트 입력</span>
+                                <div class="keys">lorem</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span>길이별 샘플 텍스트 입력</span>
+                                <div class="keys">1~3lorem</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-container">
+                    <button class="header-btn load-btn json-button" id="load-btn" aria-label="JSON 파일 불러오기" aria-haspopup="true" aria-expanded="false">
+                        <img src="./src/images/icon-file-download.svg" alt="" aria-hidden="true" />
+                    </button>
+                </div>
+                <div class="dropdown-container">
+                    <button class="header-btn save-btn primary save-button" id="save-btn" aria-label="저장하기" aria-haspopup="true" aria-expanded="false">저장하기</button>
+                    <div class="dropdown-menu save-options" id="save-dropdown" role="menu" style="display: none">
+                        <h3>저장</h3>
+                        <div class="save-option-list">
+                            <button class="save-option" onclick="tool.saveAsLocal()">
+                                <img src="./src/images/icon-code-download.svg" alt="로컬 저장" />
+                                로컬 스토리지 저장
+                            </button>
+                        </div>
+                        <h3>다른이름으로 저장</h3>
+                        <div class="save-option-list">
+                            <button class="save-option" onclick="tool.save()">
+                                <img src="./src/images/icon-code-download.svg" alt="JSON 다운로드" />
+                                JSON 다운로드
+                            </button>
+                            <button class="save-option" onclick="tool.exportAsImage()">
+                                <img src="./src/images/icon-code-download.svg" alt="PNG 다운로드" />
+                                PNG 다운로드
+                            </button>
+                        </div>
+                        <div class="save-options-footer">오류 제보 및 문의: paul-lab@naver.com</div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </header>
 
         <div class="main-container">
-            <div class="left-panel">
+            <!-- 왼쪽 사이드바 -->
+            <aside class="sidebar-left left-panel" role="complementary" aria-label="페이지 및 레이어 패널">
                 <div class="pages-panel">
-                    <div class="panel-header">
+                    <div class="panel-header sidebar-header">
                         <h2>Pages</h2>
-                        <button onclick="tool.addNewPage()">+ New Page</button>
+                        <button class="add-btn" onclick="tool.addNewPage()" aria-label="페이지 추가" title="페이지 추가">
+                            <img src="./src/images/icon-+.svg" alt="" />
+                            <span>페이지 추가</span>
+                        </button>
                     </div>
-                    <div id="pages-list" class="pages-list"></div>
-                </div>
-                <div class="components-panel">
-                    <h2>Components</h2>
-                    <div class="components-list">
-                        <button class="component-btn" data-type="box">Box</button>
-                        <button class="component-btn" data-type="text">Text</button>
-                        <button class="component-btn" data-type="button">Button</button>
-                        <button class="component-btn" data-type="icon">Icon</button>
-                        <button class="component-btn" data-type="image">Image</button>
-                        <button class="component-btn" data-type="table">Table</button>
-                        <button class="component-btn" data-type="link">Link</button>
-                        <button class="component-btn" data-type="input">Input</button>
-                        <button class="component-btn" data-type="panel">Panel</button>
-                        <button class="component-btn" data-type="sticky">Note</button>
-                    </div>
-
-                    <div class="layers-list">
-                        <h2>Layers</h2>
-                        <div id="layers-list"></div>
+                    <div id="pages-list" class="pages-list page-list" role="list">
+                        <!-- 페이지들이 동적으로 추가됩니다 -->
                     </div>
                 </div>
+                <div class="layers-panel">
+                    <h2>Layers</h2>
+                    <div class="layers-list"></div>
+                </div>
+            </aside>
+
+            <!-- 툴바를 별도로 분리 -->
+            <div class="toolbar" role="toolbar" aria-label="디자인 도구">
+                <div class="tool-group toolbar-group">
+                    <button class="tool-btn" id="undo-btn" onclick="tool.undo()" aria-label="실행 취소" title="실행 취소">
+                        <img src="./src/images/icon-left-arrow.svg" alt="" />
+                    </button>
+                    <button class="tool-btn" id="redo-btn" onclick="tool.redo()" aria-label="실행 복귀" title="실행 복귀">
+                        <img src="./src/images/icon-right-arrow.svg" alt="" />
+                    </button>
+                    <button class="tool-btn" id="delete-btn" onclick="tool.deleteSelected()" aria-label="삭제" title="삭제">
+                        <img src="./src/images/icon-delete.svg" alt="" />
+                    </button>
+                    <button class="tool-btn" id="reset-btn" onclick="tool.resetZoom()" aria-label="초기화" title="초기화">
+                        <img src="./src/images/icon-reset.svg" alt="" />
+                    </button>
+                </div>
+                <div class="tool-group toolbar-group">
+                    <div class="dropdown-container">
+                        <button class="tool-btn" id="frame-btn" aria-label="프레임 추가" title="프레임 사이즈" aria-haspopup="true" aria-expanded="false">
+                            <img src="./src/images/icon-frame-size.svg" alt="" />
+                        </button>
+                        <div class="dropdown-menu tool-dropdown frame-options" id="frame-dropdown" role="menu" style="display: none">
+                            <button class="dropdown-item" onclick="tool.setCanvasSize('desktop')" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <span>Desktop</span>
+                                <span class="frame-size">1920×1080</span>
+                            </button>
+                            <button class="dropdown-item" onclick="tool.setCanvasSize('laptop')" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <span>Laptop</span>
+                                <span class="frame-size">1366×768</span>
+                            </button>
+                            <button class="dropdown-item" onclick="tool.setCanvasSize('iphone12')" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <span>iPhone 12</span>
+                                <span class="frame-size">390×844</span>
+                            </button>
+                            <button class="dropdown-item" onclick="tool.setCanvasSize('galaxy')" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <span>Galaxy</span>
+                                <span class="frame-size">412×915</span>
+                            </button>
+                            <button class="dropdown-item" onclick="tool.setCanvasSize('ipad')" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <span>iPad</span>
+                                <span class="frame-size">820×1180</span>
+                            </button>
+                            <button class="dropdown-item frame-size-custom" onclick="tool.setCanvasSize('custom')" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <span>Custom Size</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dropdown-container" id="shape-options">
+                        <button class="tool-btn" id="shape-btn" onclick="tool.showShapeDialog()" aria-label="도형 추가" title="도형 추가" aria-haspopup="true" aria-expanded="false">
+                            <img src="./src/images/icon-asset-import.svg" alt="" />
+                        </button>
+                        <div class="dropdown-menu tool-dropdown shape-options" id="shape-dropdown" role="menu" style="display: none">
+                            <button class="dropdown-item shape-item" data-shape="square" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <div class="shape-preview">
+                                    <img src="./src/images/icon-square.svg" alt="" />
+                                </div>
+                                <div class="shape-name">사각형</div>
+                            </button>
+                            <button class="dropdown-item shape-item" data-shape="line" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <div class="shape-preview">
+                                    <img src="./src/images/icon-line.svg" alt="" />
+                                </div>
+                                <div class="shape-name">선</div>
+                            </button>
+                            <button class="dropdown-item shape-item" data-shape="arrow" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <div class="shape-preview">
+                                    <img src="./src/images/icon-arrow.svg" alt="" />
+                                </div>
+                                <div class="shape-name">화살표</div>
+                            </button>
+                            <button class="dropdown-item shape-item" data-shape="circle" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <div class="shape-preview">
+                                    <img src="./src/images/icon-circle.svg" alt="" />
+                                </div>
+                                <div class="shape-name">원형</div>
+                            </button>
+                            <button class="dropdown-item shape-item" data-shape="triangle" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <div class="shape-preview">
+                                    <img src="./src/images/icon-triangle.svg" alt="" />
+                                </div>
+                                <div class="shape-name">삼각형</div>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="tool-btn" onclick="tool.addElement('text')" id="text-btn" aria-label="텍스트 추가" title="텍스트 추가">
+                        <img src="./src/images/icon-text.svg" alt="" />
+                    </button>
+                    <div class="dropdown-container">
+                        <button class="tool-btn" onclick="tool.showButtonDialog()" id="button-btn" aria-label="버튼 추가" title="버튼 추가" aria-haspopup="true" aria-expanded="false">
+                            <img src="./src/images/icon-button.svg" alt="" />
+                        </button>
+                        <div class="dropdown-menu tool-dropdown button-options" id="button-dropdown" role="menu" style="display: none">
+                            <button class="dropdown-item button-item" data-button="activate" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-btn-active.svg" alt="Primary Button" />
+                                <span>활성화 버튼</span>
+                            </button>
+                            <button class="dropdown-item button-item" data-button="normal" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-btn-normal.svg" alt="" />
+                                <span>기본 버튼</span>
+                            </button>
+                            <button class="dropdown-item button-item" data-button="hover" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-btn-hover.svg" alt="" />
+                                <span>호버 버튼</span>
+                            </button>
+                            <button class="dropdown-item button-item" data-button="deactivate" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-btn-disable.svg" alt=""">
+                                <span>비활성화 버튼</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dropdown-container">
+                        <button class="tool-btn" onclick="tool.showIconDialog()" id="icon-btn" aria-label="아이콘 추가" title="아이콘 추가" aria-haspopup="true" aria-expanded="false">
+                            <img src="./src/images/icon-icon.svg" alt="" />
+                        </button>
+                        <div class="dropdown-menu tool-dropdown icon-grid" id="icon-dropdown" role="menu">
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="close">
+                                <img src="./src/images/icon-asset-x.svg" alt="닫기 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="arrow-up">
+                                <img src="./src/images/icon-asset-arrow.svg" alt="위쪽 화살표 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="arrow-down">
+                                <img src="./src/images/icon-asset-arrow.svg" style="transform: rotate(180deg)" alt="아래쪽 화살표 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="plus">
+                                <img src="./src/images/icon-asset-plus.svg" alt="더하기 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="hamburger">
+                                <img src="./src/images/icon-asset-hamburger.svg" alt="메뉴 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="home">
+                                <img src="./src/images/icon-asset-home.svg" alt="홈 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="search">
+                                <img src="./src/images/icon-asset-search.svg" alt="검색 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="user">
+                                <img src="./src/images/icon-asset-person.svg" alt="사용자 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="setting">
+                                <img src="./src/images/icon-asset-setting.svg" alt="설정 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="link">
+                                <img src="./src/images/icon-asset-link.svg" alt="링크 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="speaker">
+                                <img src="./src/images/icon-asset-speaker.svg" alt="스피커 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="share">
+                                <img src="./src/images/icon-asset-share.svg" alt="공유 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="anglebracket-open">
+                                <img src="./src/images/icon-asset-anlgebracket.svg" alt="여는 꺽쇠 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="anglebracket-close">
+                                <img src="./src/images/icon-asset-anlgebracket.svg" style="transform: rotate(180deg)" alt="닫는 꺽쇠 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="writing">
+                                <img src="./src/images/icon-asset-writing.svg" alt="쓰기 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="image">
+                                <img src="./src/images/icon-asset-Image.svg" alt="이미지 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="download">
+                                <img src="./src/images/icon-asset-download.svg" alt="다운로드 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="upload">
+                                <img src="./src/images/icon-asset-upload.svg" alt="업로드 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="heart">
+                                <img src="./src/images/icon-asset-heart.svg" alt="하트 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="heart-fill">
+                                <img src="./src/images/icon-asset-heart-fill.svg" alt="채워진 하트 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="check">
+                                <img src="./src/images/icon-asset-check.svg" alt="체크 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="check-fill">
+                                <img src="./src/images/icon-asset-check-fill.svg" alt="채워진 체크 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="square-check">
+                                <img src="./src/images/icon-asset-square-check.svg" alt="사각형 체크 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="square-check-fill">
+                                <img src="./src/images/icon-asset-square-check-fill.svg" alt="채워진 사각형 체크 아이콘" />
+                            </button>
+                            <button class="dropdown-item icon-item" role="menuitem" data-icon="calendar">
+                                <img src="./src/images/icon-asset-calendar.svg" alt="캘린더 아이콘" />
+                            </button>
+                        </div>
+                    </div>
+                    <button class="tool-btn" onclick="tool.addElement('image')" id="image-btn" aria-label="이미지 추가" title="이미지 추가">
+                        <img src="./src/images/icon-image.svg" alt="" />
+                    </button>
+                    <button class="tool-btn" onclick="tool.addElement('table')" id="table-btn" aria-label="표 추가" title="표 추가">
+                        <img src="./src/images/icon-table.svg" alt="" />
+                    </button>
+                    <div class="dropdown-container">
+                        <button class="tool-btn" onclick="tool.showInputDialog()" id="input-btn" aria-label="입력 추가" title="입력칸 추가" aria-haspopup="true" aria-expanded="false">
+                            <img src="./src/images/icon-input.svg" alt="" />
+                        </button>
+                        <div class="dropdown-menu tool-dropdown input-options" id="input-dropdown" role="menu" style="display: none">
+                            <button class="dropdown-item input-item" data-input="normal" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-input-normal.svg" alt="Default Input" />
+                                <span>기본 입력</span>
+                            </button>
+                            <button class="dropdown-item input-item" data-input="hover" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-input-hover.svg" alt="Default Input" />
+                                <span>호버 입력</span>
+                            </button>
+                            <button class="dropdown-item input-item" data-input="focus" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-input-focus.svg" alt="Default Input" />
+                                <span>포커스 입력</span>
+                            </button>
+                            <button class="dropdown-item input-item" data-input="error" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-input-error.svg" alt="Default Input" />
+                                <span>오류 입력</span>
+                            </button>
+                            <button class="dropdown-item input-item" data-input="button-include" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-input-button.svg" alt="Default Input" />
+                                <span>버튼 포함 입력</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dropdown-container">
+                        <button class="tool-btn" onclick="tool.showAlertDialog()" id="alert-btn" aria-label="알림 추가" title="알림 추가" aria-haspopup="true" aria-expanded="false">
+                            <img src="./src/images/icon-alert.svg" alt="" />
+                        </button>
+                        <div class="dropdown-menu tool-dropdown alert-options" id="alert-dropdown" role="menu" style="display: none">
+                            <button class="dropdown-item alert-item" data-alert="information" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-alert-info.svg" alt="" />
+                                <span>정보 알림</span>
+                            </button>
+                            <button class="dropdown-item alert-item" data-alert="success" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-alert-success.svg" alt="" />
+                                <span>성공 알림</span>
+                            </button>
+                            <button class="dropdown-item alert-item" data-alert="warning" role="menuitem">
+                                <div class="radio-indicator"></div>
+                                <img src="./src/images/icon-alert-warning.svg" alt="" />
+                                <span>경고 알림</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-container">
+                    <button class="tool-btn" onclick="tool.showMemoDialog()" id="memo-btn" aria-label="메모 추가" title="메모 추가" aria-haspopup="true" aria-expanded="false">
+                        <img src="./src/images/icon-memo.svg" alt="" />
+                    </button>
+                    <div class="dropdown-menu tool-dropdown memo-colors memo-options" id="memo-dropdown" role="menu" style="display: none">
+                        <button class="dropdown-item memo-item yellow" onclick="tool.addElement('sticky-yellow')" role="menuitem" data-memo="yellow" style="background: #fff740"></button>
+                        <button class="dropdown-item memo-item pink" onclick="tool.addElement('sticky-pink')" role="menuitem" data-memo="pink" style="background: #ff7eb9"></button>
+                        <button class="dropdown-item memo-item blue" onclick="tool.addElement('sticky-blue')" role="menuitem" data-memo="blue" style="background: #7afcff"></button>
+                        <button class="dropdown-item memo-item green" onclick="tool.addElement('sticky-green')" role="menuitem" data-memo="green" style="background: #98ff98"></button>
+                        <button class="dropdown-item memo-item orange" onclick="tool.addElement('sticky-orange')" role="menuitem" data-memo="orange" style="background: #ffb347"></button>
+                    </div>
+                </div>
             </div>
 
-            <div class="canvas-area">
-                <div id="canvas" class="canvas"></div>
-            </div>
+            <!-- 메인 콘텐츠 -->
+            <main class="main-content canvas-container" role="main">
+                <!-- 캔버스 -->
+                <div class="canvas-area">
+                    <div id="canvas" class="canvas" role="img" aria-label="디자인 캔버스" tabindex="0">
+                        <!-- 요소들이 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+            </main>
 
-            <div class="properties-panel">
-                <h2>Properties</h2>
-                <div id="properties"></div>
-            </div>
+            <!-- 오른쪽 사이드바 -->
+            <aside class="sidebar-right properties-panel" role="complementary" aria-label="속성 패널">
+                <div class="properties-header">
+                    <h2>Properties</h2>
+                </div>
+
+                <div id="properties">
+                    <!-- 속성들이 동적으로 추가됩니다 -->
+                </div>
+            </aside>
         </div>
 
         <script src="./prototypingTool.js"></script>
