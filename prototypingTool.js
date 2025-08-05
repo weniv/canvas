@@ -4610,7 +4610,7 @@ class PrototypingTool {
                         <img src="src/images/icon-copy.svg" alt="Copy" style="width: 14px; height: 14px;">
                     </button>
                 </div>
-                <div class="coordinate-input">
+                <div class="element-content">
                     <span>${element.content || ""}</span>
                 </div>
             </div>

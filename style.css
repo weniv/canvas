@@ -878,27 +878,20 @@ button {
     color: #121314;
 }
 
+.element-content {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f3f5fa;
+    border-radius: 6px;
+    border: none;
+}
+
 /* 우측 패널 텍스트 말줄임표 처리 */
-.sidebar-right .property-section,
-.sidebar-right .coordinate-input,
-.sidebar-right .color-value,
-.sidebar-right .opacity-value {
+.element-content span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.sidebar-right .property-section *,
-.sidebar-right .coordinate-input *,
-.sidebar-right .color-value,
-.sidebar-right .opacity-value {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.sidebar-right .font-size-label {
-    overflow: visible;
 }
 
 /* Type 스타일 */
