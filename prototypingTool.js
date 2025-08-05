@@ -4672,7 +4672,7 @@ class PrototypingTool {
                 </div>
                 <div class="coordinate-controls">
                     <div class="coordinate-input">
-                        <label>Size</label>
+                        <label class="font-size-label" >Size</label>
                         <input type="number" value="${element.fontSize || 14}" min="8" max="72"
                             onchange="tool.updateElementProperty('fontSize', this.value)"
                             onkeydown="tool.handleNumberInputKeydown(event, 'fontSize', this)">

@@ -897,6 +897,10 @@ button {
     white-space: nowrap;
 }
 
+.sidebar-right .font-size-label {
+    overflow: visible;
+}
+
 /* Type 스타일 */
 .property-type {
     display: inline-block;
