@@ -441,11 +441,11 @@
                         <img src="./src/images/icon-memo.svg" alt="" />
                     </button>
                     <div class="dropdown-menu tool-dropdown memo-colors memo-options" id="memo-dropdown" role="menu" style="display: none">
-                        <button class="dropdown-item memo-item yellow" onclick="tool.addElement('sticky-yellow')" role="menuitem" data-memo="yellow" style="background: #fff740"></button>
-                        <button class="dropdown-item memo-item pink" onclick="tool.addElement('sticky-pink')" role="menuitem" data-memo="pink" style="background: #ff7eb9"></button>
-                        <button class="dropdown-item memo-item blue" onclick="tool.addElement('sticky-blue')" role="menuitem" data-memo="blue" style="background: #7afcff"></button>
-                        <button class="dropdown-item memo-item green" onclick="tool.addElement('sticky-green')" role="menuitem" data-memo="green" style="background: #98ff98"></button>
-                        <button class="dropdown-item memo-item orange" onclick="tool.addElement('sticky-orange')" role="menuitem" data-memo="orange" style="background: #ffb347"></button>
+                        <button class="dropdown-item memo-item yellow" role="menuitem" data-memo="yellow" style="background: #fff740"></button>
+                        <button class="dropdown-item memo-item pink" role="menuitem" data-memo="pink" style="background: #ff7eb9"></button>
+                        <button class="dropdown-item memo-item blue" role="menuitem" data-memo="blue" style="background: #7afcff"></button>
+                        <button class="dropdown-item memo-item green" role="menuitem" data-memo="green" style="background: #98ff98"></button>
+                        <button class="dropdown-item memo-item orange" role="menuitem" data-memo="orange" style="background: #ffb347"></button>
                     </div>
                 </div>
             </div>
@@ -456,6 +456,14 @@
                 <div class="canvas-area">
                     <div id="canvas" class="canvas" role="img" aria-label="디자인 캔버스" tabindex="0">
                         <!-- 요소들이 동적으로 추가됩니다 -->
+                    </div>
+
+                    <!-- 캔버스 컨트롤 -->
+                    <div class="canvas-controls">
+                        <button id="zoom-out" aria-label="줌 아웃" title="줌 아웃">-</button>
+                        <div class="zoom-value">100%</div>
+                        <button id="zoom-in" aria-label="줌 인" title="줌 인">+</button>
+                        <button id="reset-view" aria-label="뷰 리셋" title="뷰 리셋">⌂</button>
                     </div>
                 </div>
             </main>

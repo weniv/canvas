@@ -39,6 +39,9 @@ class PrototypingTool {
             speed: { x: 0, y: 0 },
         };
 
+        // 줌 초기화 플래그
+        this.zoomInitialized = false;
+
         // 테이블 기본 설정
         this.tableDefaults = {
             rows: 3,
@@ -324,6 +327,11 @@ class PrototypingTool {
 
     handleDropdownToggle(e) {
         const button = e.target.closest('[aria-haspopup="true"]');
+
+        if (!button) {
+            return;
+        }
+
         const dropdown = button.nextElementSibling;
 
         if (!dropdown || !dropdown.classList.contains("dropdown-menu")) {
@@ -578,7 +586,7 @@ class PrototypingTool {
             }
             // 메모 추가
             else if (dropdownItem.dataset.memo) {
-                this.addElement("sticky", itemType);
+                this.addElement("sticky-" + itemType);
             }
         }
     }
@@ -615,6 +623,23 @@ class PrototypingTool {
         this.maxZIndex++;
         const position = this.findAvailablePosition(120, 40);
 
+        // 버튼 타입에 따른 기본 배경색 설정
+        let defaultBackgroundColor;
+        switch (buttonType) {
+            case "activate":
+                defaultBackgroundColor = "#2E6FF2";
+                break;
+            case "normal":
+                defaultBackgroundColor = "#ffffff";
+                break;
+            case "hover":
+            case "deactivate":
+                defaultBackgroundColor = "#D9DBE0";
+                break;
+            default:
+                defaultBackgroundColor = "#2E6FF2";
+        }
+
         const element = {
             id: Date.now(),
             type: "button",
@@ -628,6 +653,9 @@ class PrototypingTool {
             zIndex: this.maxZIndex,
             opacity: 1,
             fontSize: 14,
+            backgroundColor: defaultBackgroundColor,
+            textColor: buttonType === "normal" ? "#000000" : buttonType === "hover" ? "#121314" : "#ffffff", // buttonType에 따른 기본 텍스트 색상
+            fontWeight: "normal",
         };
 
         this.elements.push(element);
@@ -656,6 +684,9 @@ class PrototypingTool {
             shapeType: shapeType,
             zIndex: this.maxZIndex,
             opacity: 1,
+            fill: "#D9D9D9",
+            borderWidth: shapeType === "line" || shapeType === "arrow" ? 1 : undefined,
+            borderColor: shapeType === "line" || shapeType === "arrow" ? "#000000" : undefined,
         };
 
         this.elements.push(element);
@@ -687,6 +718,8 @@ class PrototypingTool {
             zIndex: this.maxZIndex,
             opacity: 1,
             fontSize: 14,
+            textColor: "#000000", // 입력 필드 기본 텍스트 색상
+            fontWeight: "normal",
         };
 
         this.elements.push(element);
@@ -717,6 +750,8 @@ class PrototypingTool {
             zIndex: this.maxZIndex,
             opacity: 1,
             fontSize: 14,
+            textColor: "#121314", // 알림 기본 텍스트 색상
+            fontWeight: "normal",
         };
 
         this.elements.push(element);
@@ -767,6 +802,8 @@ class PrototypingTool {
             zIndex: this.maxZIndex,
             opacity: 1,
             fontSize: 16,
+            textColor: "#000000", // 메모 기본 텍스트 색상
+            fontWeight: "normal",
         };
 
         this.elements.push(element);
@@ -1035,6 +1072,11 @@ class PrototypingTool {
     initializeZoomAndPan() {
         const canvasArea = document.querySelector(".canvas-area");
 
+        // 이미 초기화되었는지 확인
+        if (this.zoomInitialized) {
+            return;
+        }
+
         // 초기 커서 설정
         const canvasAreaElement = document.querySelector(".canvas-area");
         if (canvasAreaElement) {
@@ -1281,6 +1323,9 @@ class PrototypingTool {
         // 그리드 업데이트
         this.updateGridBackground();
         window.addEventListener("resize", () => this.updateGridBackground());
+
+        // 초기화 완료 플래그 설정
+        this.zoomInitialized = true;
     }
 
     zoom(delta, clientX, clientY) {
@@ -1380,7 +1425,7 @@ class PrototypingTool {
                 const canvasArea = document.querySelector(".canvas-area");
                 const rect = canvasArea.getBoundingClientRect();
                 // 화면 중앙을 기준으로 줌
-                this.smoothZoom(1.15, rect.left + rect.width / 2, rect.top + rect.height / 2); // 버튼 클릭 시 더 큰 폭의 줌
+                this.zoom(1.15, rect.left + rect.width / 2, rect.top + rect.height / 2); // 버튼 클릭 시 더 큰 폭의 줌
             });
         }
 
@@ -1391,7 +1436,7 @@ class PrototypingTool {
                 const canvasArea = document.querySelector(".canvas-area");
                 const rect = canvasArea.getBoundingClientRect();
                 // 화면 중앙을 기준으로 줌
-                this.smoothZoom(0.85, rect.left + rect.width / 2, rect.top + rect.height / 2); // 버튼 클릭 시 더 큰 폭의 줌
+                this.zoom(0.85, rect.left + rect.width / 2, rect.top + rect.height / 2); // 버튼 클릭 시 더 큰 폭의 줌
             });
         }
 
@@ -1450,8 +1495,10 @@ class PrototypingTool {
 
     updateCanvasTransform() {
         const canvas = document.getElementById("canvas");
-        canvas.style.transform = `translate(${this.canvasOffset.x}px, ${this.canvasOffset.y}px) scale(${this.scale})`;
-        canvas.style.transformOrigin = "0 0";
+        if (canvas) {
+            canvas.style.transform = `translate(${this.canvasOffset.x}px, ${this.canvasOffset.y}px) scale(${this.scale})`;
+            canvas.style.transformOrigin = "0 0";
+        }
     }
 
     copyElement() {
@@ -1690,8 +1737,6 @@ class PrototypingTool {
             bottom: visibleArea.bottom - height - 20,
         };
 
-        console.log("Searching for position:", { width, height, placementArea, existingElements: this.elements.length });
-
         // 1. 먼저 가시 영역의 정중앙에서 시작
         const centerPosition = {
             x: visibleCenterX - width / 2,
@@ -1713,7 +1758,6 @@ class PrototypingTool {
         // 2. 중앙 주변에서 나선형 검색
         const centerSearchResult = this.findNearestAvailablePosition(centerPosition.x, centerPosition.y, width, height, placementArea);
         if (centerSearchResult) {
-            console.log("Found near-center position:", centerSearchResult);
             return centerSearchResult;
         }
 
@@ -1845,14 +1889,6 @@ class PrototypingTool {
             };
 
             const overlaps = !(newRect.right < elementRect.left || newRect.left > elementRect.right || newRect.bottom < elementRect.top || newRect.top > elementRect.bottom);
-
-            if (overlaps) {
-                console.log("Collision detected with element:", element.name, {
-                    newRect,
-                    elementRect,
-                });
-            }
-
             return overlaps;
         });
 
@@ -1963,7 +1999,8 @@ class PrototypingTool {
             this.canvasOffset.x = startOffsetX + (targetOffsetX - startOffsetX) * easeOutCubic;
             this.canvasOffset.y = startOffsetY + (targetOffsetY - startOffsetY) * easeOutCubic;
 
-            this.updateCanvasTransform();
+            // transform 속성 적용하지 않음
+            // this.updateCanvasTransform();
             this.updateZoomValue();
 
             if (progress < 1) {
@@ -2082,7 +2119,7 @@ class PrototypingTool {
             type: "text",
             x: x,
             y: y,
-            width: 100,
+            width: 50, // 더 작은 초기 너비
             height: 30,
             name: this.generateElementName("text"),
             content: "",
@@ -2105,10 +2142,10 @@ class PrototypingTool {
         // 새로 추가된 요소를 포함하여 뷰 최적화
         this.optimizeViewForNewElement(element);
 
-        // 바로 텍스트 편집 시작
+        // 바로 텍스트 편집 시작 (약간의 지연으로 DOM이 완전히 렌더링된 후 편집 시작)
         setTimeout(() => {
             this.startTextEditing(element);
-        }, 100);
+        }, 10);
     }
 
     // 텍스트 편집 시작
@@ -2117,6 +2154,11 @@ class PrototypingTool {
 
         const elementDiv = document.getElementById(`element-${element.id}`);
         if (!elementDiv) return;
+
+        // 이미 편집 중인지 확인
+        if (elementDiv.querySelector(".editable-text")) {
+            return;
+        }
 
         // 기존 내용 제거
         elementDiv.innerHTML = "";
@@ -2149,15 +2191,23 @@ class PrototypingTool {
         textarea.focus();
 
         // 자동 크기 조정
-        const adjustHeight = () => {
+        const adjustSize = () => {
+            // 높이 조정
             textarea.style.height = "auto";
             textarea.style.height = textarea.scrollHeight + "px";
             element.height = textarea.scrollHeight;
             elementDiv.style.height = element.height + "px";
+
+            // 너비 조정 - 텍스트 길이에 따라 동적 조정
+            textarea.style.width = "auto";
+            const textWidth = textarea.scrollWidth;
+            const newWidth = Math.max(textWidth + 20, 50); // 패딩 포함, 최소 너비 50px
+            element.width = newWidth;
+            elementDiv.style.width = element.width + "px";
         };
 
-        textarea.addEventListener("input", adjustHeight);
-        adjustHeight();
+        textarea.addEventListener("input", adjustSize);
+        adjustSize();
 
         // 편집 완료 처리
         const finishEditing = () => {
@@ -2170,15 +2220,34 @@ class PrototypingTool {
             }
 
             element.content = newContent;
-            element.width = textarea.scrollWidth;
+
+            // 텍스트 크기에 따라 너비 조정
+            const tempSpan = document.createElement("span");
+            tempSpan.style.fontSize = element.fontSize ? `${element.fontSize}px` : "16px";
+            tempSpan.style.fontFamily = element.fontFamily || "Arial, sans-serif";
+            tempSpan.style.fontWeight = element.fontWeight || "normal";
+            tempSpan.style.fontStyle = element.fontStyle || "normal";
+            tempSpan.style.textDecoration = element.textDecoration || "none";
+            tempSpan.style.visibility = "hidden";
+            tempSpan.style.position = "absolute";
+            tempSpan.style.whiteSpace = "nowrap";
+            tempSpan.textContent = newContent;
+
+            document.body.appendChild(tempSpan);
+            const newWidth = Math.max(tempSpan.offsetWidth + 20, 50); // 패딩 포함, 최소 너비 50px
+            document.body.removeChild(tempSpan);
+
+            element.width = newWidth;
             element.height = textarea.scrollHeight;
 
             // 텍스트 영역 제거하고 일반 텍스트로 렌더링
             elementDiv.innerHTML = "";
-            this.renderElement(element);
+            elementDiv.textContent = element.content;
+            elementDiv.style.width = `${element.width}px`;
+            elementDiv.style.height = `${element.height}px`;
 
             // 이벤트 리스너 제거
-            textarea.removeEventListener("input", adjustHeight);
+            textarea.removeEventListener("input", adjustSize);
             textarea.removeEventListener("blur", finishEditing);
             textarea.removeEventListener("keydown", handleKeydown);
         };
@@ -2245,6 +2314,13 @@ class PrototypingTool {
     }
 
     addElement(type, subtype = null) {
+        // sticky-yellow, sticky-pink 등의 형식 처리
+        if (type.startsWith("sticky-")) {
+            const color = type.split("-")[1];
+            this.addStickyElement(color);
+            return;
+        }
+
         this.maxZIndex++;
 
         if (type === "image") {
@@ -2359,6 +2435,12 @@ class PrototypingTool {
         };
 
         this.elements.push(element);
+        this.renderElement(element);
+        this.selectElement(element);
+        this.saveHistory();
+
+        // 새로 추가된 요소를 포함하여 뷰 최적화
+        this.optimizeViewForNewElement(element);
     }
 
     // 테이블 요소 추가 메서드
@@ -2760,6 +2842,31 @@ class PrototypingTool {
 
         document.body.appendChild(dialog);
 
+        // 모달 닫기 함수
+        const closeDialog = () => {
+            if (document.body.contains(dialog)) {
+                document.body.removeChild(dialog);
+            }
+        };
+
+        // ESC 키로 모달 닫기
+        const handleEscKey = (e) => {
+            if (e.key === "Escape") {
+                closeDialog();
+                document.removeEventListener("keydown", handleEscKey);
+            }
+        };
+        document.addEventListener("keydown", handleEscKey);
+
+        // 외부 클릭으로 모달 닫기
+        const handleOutsideClick = (e) => {
+            if (e.target === dialog) {
+                closeDialog();
+                document.removeEventListener("click", handleOutsideClick);
+            }
+        };
+        document.addEventListener("click", handleOutsideClick);
+
         const fileInput = dialog.querySelector(".image-file-input");
         fileInput.addEventListener("change", async (e) => {
             const file = e.target.files[0];
@@ -2770,7 +2877,9 @@ class PrototypingTool {
                     this.renderElement(element);
                     this.selectElement(element);
                     this.saveHistory();
-                    document.body.removeChild(dialog);
+                    closeDialog();
+                    document.removeEventListener("keydown", handleEscKey);
+                    document.removeEventListener("click", handleOutsideClick);
                 } catch (error) {
                     alert(error.message);
                 }
@@ -2778,7 +2887,9 @@ class PrototypingTool {
         });
 
         dialog.querySelector(".cancel-btn").addEventListener("click", () => {
-            document.body.removeChild(dialog);
+            closeDialog();
+            document.removeEventListener("keydown", handleEscKey);
+            document.removeEventListener("click", handleOutsideClick);
         });
     }
 
@@ -2829,6 +2940,7 @@ class PrototypingTool {
             borderStyle: "none",
             borderWidth: "0px",
             boxSizing: "border-box",
+            opacity: 1, // 항상 불투명
         });
 
         // borderPosition이 outside인 경우 margin 적용
@@ -2854,6 +2966,8 @@ class PrototypingTool {
             switch (element.shapeType) {
                 case "square":
                     // 정사각형
+                    innerContainer.style.backgroundColor = this.setAlphaToColor(element.fill || "#D9D9D9", element.fillOpacity);
+
                     if (element.showX) {
                         // SVG로 대각선 생성
                         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -2889,12 +3003,21 @@ class PrototypingTool {
                     break;
 
                 case "circle":
-                    // 원형 기본 스타일 설정
-                    Object.assign(innerContainer.style, {
-                        borderRadius: "50%",
-                        backgroundColor: "#ffffff",
-                        border: "none",
-                    });
+                    // 원형을 위한 자식 div 생성
+                    const circleDiv = document.createElement("div");
+                    circleDiv.style.width = "100%";
+                    circleDiv.style.height = "100%";
+                    circleDiv.style.borderRadius = "50%";
+                    circleDiv.style.backgroundColor = this.setAlphaToColor(element.fill || "#D9D9D9", element.fillOpacity);
+
+                    // stroke가 있는 경우 border 적용 (fill이 적용되는 내부 div에만)
+                    if (element.borderWidth && element.borderWidth > 0) {
+                        circleDiv.style.border = `${element.borderWidth}px solid ${element.borderColor || "#000000"}`;
+                    } else {
+                        circleDiv.style.border = "none";
+                    }
+
+                    innerContainer.appendChild(circleDiv);
 
                     if (element.showX) {
                         // SVG로 대각선만 생성
@@ -2912,7 +3035,7 @@ class PrototypingTool {
                         line1.setAttribute("y1", "0");
                         line1.setAttribute("x2", "100%");
                         line1.setAttribute("y2", "100%");
-                        line1.setAttribute("stroke", element.borderColor);
+                        line1.setAttribute("stroke", element.borderColor || "#000000");
                         line1.setAttribute("stroke-width", "1");
 
                         // 대각선 2 (우상단 → 좌하단)
@@ -2921,7 +3044,7 @@ class PrototypingTool {
                         line2.setAttribute("y1", "0");
                         line2.setAttribute("x2", "0");
                         line2.setAttribute("y2", "100%");
-                        line2.setAttribute("stroke", element.borderColor);
+                        line2.setAttribute("stroke", element.borderColor || "#000000");
                         line2.setAttribute("stroke-width", "1");
 
                         svg.appendChild(line1);
@@ -2934,8 +3057,8 @@ class PrototypingTool {
                     // 선
                     const line = document.createElement("div");
                     line.style.width = "100%";
-                    line.style.height = "1px";
-                    line.style.backgroundColor = "#000000";
+                    line.style.height = `${element.borderWidth || 1}px`;
+                    line.style.backgroundColor = element.borderColor || "#000000";
                     line.style.position = "absolute";
                     line.style.top = "50%";
                     line.style.transform = "translateY(-50%)";
@@ -2950,21 +3073,22 @@ class PrototypingTool {
 
                     // 선 스타일
                     arrowLine.style.width = "100%";
-                    arrowLine.style.height = "1px";
-                    arrowLine.style.backgroundColor = "#000000";
+                    arrowLine.style.height = `${element.borderWidth || 1}px`;
+                    arrowLine.style.backgroundColor = element.borderColor || "#000000";
                     arrowLine.style.position = "absolute";
                     arrowLine.style.top = "50%";
                     arrowLine.style.transform = "translateY(-50%)";
 
                     // 화살표 머리 스타일
+                    const headSize = Math.max(6, (element.borderWidth || 1) * 2);
                     arrowHead.style.position = "absolute";
                     arrowHead.style.right = "-10px";
                     arrowHead.style.top = "50%";
                     arrowHead.style.width = "0";
                     arrowHead.style.height = "0";
-                    arrowHead.style.borderTop = "6px solid transparent";
-                    arrowHead.style.borderBottom = "6px solid transparent";
-                    arrowHead.style.borderLeft = "10px solid #000000";
+                    arrowHead.style.borderTop = `${headSize}px solid transparent`;
+                    arrowHead.style.borderBottom = `${headSize}px solid transparent`;
+                    arrowHead.style.borderLeft = `${headSize * 1.5}px solid ${element.borderColor || "#000000"}`;
                     arrowHead.style.transform = "translateY(-50%)";
 
                     innerContainer.style.border = "none";
@@ -2984,7 +3108,7 @@ class PrototypingTool {
 
                     // 삼각형 경로를 동적으로 생성 (정삼각형)
                     const trianglePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    trianglePath.setAttribute("fill", element.backgroundColor || "#ffffff");
+                    trianglePath.setAttribute("fill", this.setAlphaToColor(element.fill || "#D9D9D9", element.fillOpacity));
                     trianglePath.setAttribute("stroke", "none");
                     trianglePath.setAttribute("stroke-width", "0");
                     trianglePath.setAttribute("vector-effect", "non-scaling-stroke");
@@ -3033,6 +3157,14 @@ class PrototypingTool {
                 img.style.height = "100%";
                 img.style.objectFit = "contain";
                 img.style.filter = element.iconColor ? `brightness(0) saturate(100%) ${element.iconColor}` : "";
+
+                // 화살표와 꺽쇠 아이콘에 대한 방향 적용
+                if (element.content === "arrow-down") {
+                    img.style.transform = "rotate(180deg)";
+                } else if (element.content === "anglebracket-close") {
+                    img.style.transform = "rotate(180deg)";
+                }
+
                 wrapper.appendChild(img);
             }
             div.appendChild(wrapper);
@@ -3076,7 +3208,13 @@ class PrototypingTool {
             input.style.width = "100%";
             input.style.padding = "10px 8px";
             // input.style.borderBottom = "2px solid #D9DBE0";
-            input.style.fontSize = "16px";
+            input.style.fontSize = `${element.fontSize || 16}px`;
+            if (element.textColor) {
+                input.style.color = element.textColor;
+            }
+            if (element.fontWeight) {
+                input.style.fontWeight = element.fontWeight;
+            }
 
             inputWrapper.appendChild(input);
 
@@ -3196,10 +3334,10 @@ class PrototypingTool {
                     : element.alertType === "success"
                     ? "완료되었습니다."
                     : `사이트에서 나가시겠습니까? <br /> 변경사항이 저장되지 않을 수 있습니다.`);
-            messageText.style.color = "#121314";
+            messageText.style.color = element.textColor || "#121314";
             messageText.style.textAlign = "center";
-            messageText.style.fontSize = "16px";
-            messageText.style.fontWeight = "500";
+            messageText.style.fontSize = `${element.fontSize || 16}px`;
+            messageText.style.fontWeight = element.fontWeight || "500";
             messageText.style.lineHeight = "22px";
             messageText.style.cursor = "text";
             messageText.contentEditable = "true";
@@ -3251,10 +3389,16 @@ class PrototypingTool {
             container.appendChild(btnWrapper);
             div.appendChild(container);
         } else if (element.type === "sticky") {
-            div.style.backgroundColor = element.stickyColor;
+            div.style.backgroundColor = this.setAlphaToColor(element.stickyColor, element.fillOpacity);
             const content = document.createElement("div");
             content.className = "sticky-content";
             content.style.fontSize = `${element.fontSize}px`;
+            if (element.textColor) {
+                content.style.color = element.textColor;
+            }
+            if (element.fontWeight) {
+                content.style.fontWeight = element.fontWeight;
+            }
             content.textContent = element.content;
 
             const handleDblClick = (e) => {
@@ -3271,7 +3415,7 @@ class PrototypingTool {
             div.textContent = element.content;
             if (element.fontSize) div.style.fontSize = `${element.fontSize}px`;
             if (element.fontFamily) div.style.fontFamily = element.fontFamily;
-            if (element.color) div.style.color = element.color;
+            if (element.textColor) div.style.color = element.textColor;
             if (element.textAlign) div.style.textAlign = element.textAlign;
             if (element.fontWeight) div.style.fontWeight = element.fontWeight;
             if (element.fontStyle) div.style.fontStyle = element.fontStyle;
@@ -3279,6 +3423,8 @@ class PrototypingTool {
             div.style.justifyContent = element.justifyContent || "center";
             div.style.alignItems = "center";
             div.style.display = "flex";
+            div.style.width = `${element.width}px`;
+            div.style.height = `${element.height}px`;
 
             div.addEventListener("dblclick", (e) => {
                 e.stopPropagation();
@@ -3299,6 +3445,20 @@ class PrototypingTool {
         } else if (element.type === "button") {
             div.textContent = element.content;
             div.className = `element button ${element.buttonType || "normal"}`;
+            // 버튼 배경색 적용
+            if (element.backgroundColor) {
+                div.style.backgroundColor = this.setAlphaToColor(element.backgroundColor, element.fillOpacity);
+            }
+            // 버튼 텍스트 색상 적용
+            if (element.textColor) {
+                div.style.color = element.textColor;
+            }
+            if (element.fontSize) {
+                div.style.fontSize = `${element.fontSize}px`;
+            }
+            if (element.fontWeight) {
+                div.style.fontWeight = element.fontWeight;
+            }
 
             div.addEventListener("dblclick", (e) => {
                 e.stopPropagation();
@@ -3350,7 +3510,7 @@ class PrototypingTool {
             div.appendChild(container);
         } else if (element.type === "panel") {
             Object.assign(div.style, {
-                backgroundColor: element.backgroundColor || "#ffffff",
+                backgroundColor: this.setAlphaToColor(element.backgroundColor || "#ffffff", element.fillOpacity),
                 borderColor: element.borderColor || "#dddddd",
             });
 
@@ -3372,7 +3532,7 @@ class PrototypingTool {
 
             div.appendChild(container);
         } else if (element.type === "frame") {
-            div.style.backgroundColor = element.backgroundColor;
+            div.style.backgroundColor = this.setAlphaToColor(element.backgroundColor, element.fillOpacity);
             div.style.border = "none";
             div.style.borderRadius = "8px";
 
@@ -3443,13 +3603,6 @@ class PrototypingTool {
             }
         });
 
-        // 공통 이벤트 리스너 추가
-        div.addEventListener("mousedown", (e) => {
-            if (!this.previewMode && !e.target.classList.contains("panel-close") && !e.target.classList.contains("resize-handle")) {
-                this.startDragging(e, element);
-            }
-        });
-
         // 호버 효과를 위한 이벤트 리스너 추가
         div.addEventListener("mouseenter", (e) => {
             if (!this.previewMode && !div.classList.contains("selected")) {
@@ -3479,6 +3632,13 @@ class PrototypingTool {
         if (element.type !== "text") return;
 
         const elementDiv = document.getElementById(`element-${element.id}`);
+        if (!elementDiv) return;
+
+        // 이미 편집 중인지 확인
+        if (elementDiv.querySelector(".editable-text")) {
+            return;
+        }
+
         const currentText = element.content;
 
         elementDiv.innerHTML = "";
@@ -3520,7 +3680,26 @@ class PrototypingTool {
         const finishEditing = () => {
             const newText = editableDiv.textContent;
             element.content = newText;
-            elementDiv.textContent = newText;
+
+            // 텍스트 크기에 따라 너비 조정
+            const tempSpan = document.createElement("span");
+            tempSpan.style.fontSize = element.fontSize ? `${element.fontSize}px` : "16px";
+            tempSpan.style.fontFamily = element.fontFamily || "Arial, sans-serif";
+            tempSpan.style.fontWeight = element.fontWeight || "normal";
+            tempSpan.style.fontStyle = element.fontStyle || "normal";
+            tempSpan.style.textDecoration = element.textDecoration || "none";
+            tempSpan.style.visibility = "hidden";
+            tempSpan.style.position = "absolute";
+            tempSpan.style.whiteSpace = "nowrap";
+            tempSpan.textContent = newText;
+
+            document.body.appendChild(tempSpan);
+            const newWidth = Math.max(tempSpan.offsetWidth + 10, 50); // 패딩 포함, 최소 너비 50px
+            document.body.removeChild(tempSpan);
+
+            element.width = newWidth;
+            elementDiv.style.width = element.width + "px";
+
             // 볼드 상태 유지
             elementDiv.style.fontWeight = element.isBold ? "bold" : "normal";
             this.saveHistory();
@@ -3688,6 +3867,11 @@ class PrototypingTool {
     }
 
     startDragging(e, element) {
+        // 패닝 모드이거나 스페이스바가 눌린 상태면 드래그 시작하지 않음
+        if (this.isPanning || e.spaceKey) {
+            return;
+        }
+
         this.draggedElement = element;
         const canvas = document.getElementById("canvas");
         const canvasRect = canvas.getBoundingClientRect();
@@ -3750,7 +3934,8 @@ class PrototypingTool {
                 // 스크롤 방향과 속도에 따라 캔버스 이동
                 this.canvasOffset.x += this.autoScrollState.speed.x;
                 this.canvasOffset.y += this.autoScrollState.speed.y;
-                this.updateCanvasTransform();
+                // transform 속성 적용하지 않음
+                // this.updateCanvasTransform();
 
                 // 드래그 중인 요소 위치 업데이트 (마우스 위치 유지를 위해)
                 if (this.draggedElement) {
@@ -3886,7 +4071,8 @@ class PrototypingTool {
                 // 스크롤 방향과 속도에 따라 캔버스 이동
                 this.canvasOffset.x += this.autoScrollState.speed.x;
                 this.canvasOffset.y += this.autoScrollState.speed.y;
-                this.updateCanvasTransform();
+                // transform 속성 적용하지 않음
+                // this.updateCanvasTransform();
 
                 // 드래그 중인 요소의 화면상 위치 계산
                 const elementRect = {
@@ -4320,9 +4506,13 @@ class PrototypingTool {
         const contentSupportedTypes = ["text", "button", "input", "alert", "sticky"];
         const showContentControls = contentSupportedTypes.includes(element.type);
 
-        // fill 파트를 표시할 요소 타입들 (메모 제외)
-        const fillSupportedTypes = ["frame", "shape", "image", "text", "button", "table", "alert", "input", "icon", "panel", "box", "link"];
-        const showFillControls = fillSupportedTypes.includes(element.type);
+        // text 파트를 표시할 요소 타입들 (텍스트 스타일링이 가능한 요소들)
+        const textSupportedTypes = ["text", "button", "input", "alert", "sticky"];
+        const showTextControls = textSupportedTypes.includes(element.type);
+
+        // fill 파트를 표시할 요소 타입들 (메모, 선, 화살표, 아이콘, 입력, 알림 제외)
+        const fillSupportedTypes = ["frame", "shape", "image", "text", "button", "table", "panel", "box", "link"];
+        const showFillControls = fillSupportedTypes.includes(element.type) && !(element.type === "shape" && (element.shapeType === "line" || element.shapeType === "arrow"));
 
         propertiesDiv.innerHTML = `
             <div class="property-section">
@@ -4335,13 +4525,13 @@ class PrototypingTool {
                 <div class="coordinate-controls">
                     <div class="coordinate-input">
                         <label>X</label>
-                        <input type="number" value="${Math.round(element.x)}" 
+                        <input type="number" value="${Math.round(element.x || 0)}" 
                             onchange="tool.updateElementProperty('x', this.value)"
                             onkeydown="tool.handleNumberInputKeydown(event, 'x', this)">
                     </div>
                     <div class="coordinate-input">
                         <label>Y</label>
-                        <input type="number" value="${Math.round(element.y)}"
+                        <input type="number" value="${Math.round(element.y || 0)}"
                             onchange="tool.updateElementProperty('y', this.value)"
                             onkeydown="tool.handleNumberInputKeydown(event, 'y', this)">
                     </div>
@@ -4397,13 +4587,13 @@ class PrototypingTool {
                 <div class="coordinate-controls">
                     <div class="coordinate-input">
                         <label>W</label>
-                        <input type="number" value="${Math.round(element.width)}"
+                        <input type="number" value="${Math.round(element.width || 0)}"
                             onchange="tool.updateElementProperty('width', this.value)"
                             onkeydown="tool.handleNumberInputKeydown(event, 'width', this)">
                     </div>
                     <div class="coordinate-input">
                         <label>H</label>
-                        <input type="number" value="${Math.round(element.height)}"
+                        <input type="number" value="${Math.round(element.height || 0)}"
                             onchange="tool.updateElementProperty('height', this.value)"
                             onkeydown="tool.handleNumberInputKeydown(event, 'height', this)">
                     </div>
@@ -4414,10 +4604,15 @@ class PrototypingTool {
                 showContentControls
                     ? `
             <div class="property-section">
-                <div class="property-title">Content</div>
-                <input type="text" class="content-input" value="${element.content || ""}"
-                    oninput="tool.updateElementProperty('content', this.value)"
-                    onchange="tool.updateElementProperty('content', this.value)">
+                <div class="property-title">
+                    Content
+                    <button class="copy-content-btn" onclick="tool.copyContentToClipboard('${element.content || ""}')" title="Copy content">
+                        <img src="src/images/icon-copy.svg" alt="Copy" style="width: 14px; height: 14px;">
+                    </button>
+                </div>
+                <div class="coordinate-input">
+                    <span>${element.content || ""}</span>
+                </div>
             </div>
             `
                     : ""
@@ -4431,19 +4626,66 @@ class PrototypingTool {
                 <div class="color-control">
                     <div class="color-input">
                         <input type="color" class="color-picker" 
-                            value="${element.backgroundColor || "#FFFFFF"}"
-                            oninput="tool.updateElementProperty('backgroundColor', this.value)"
-                            onchange="tool.updateElementProperty('backgroundColor', this.value)">
+                            value="${this.getHexFromColor(
+                                element.type === "shape"
+                                    ? element.fill || "#D9D9D9"
+                                    : element.backgroundColor || (element.type === "button" ? this.getButtonDefaultColor(element.buttonType) : "#FFFFFF")
+                            )}"
+                            oninput="tool.updateElementProperty('${element.type === "shape" ? "fill" : "backgroundColor"}', this.value)"
+                            onchange="tool.updateElementProperty('${element.type === "shape" ? "fill" : "backgroundColor"}', this.value)">
                         <input type="text" class="color-value" 
-                            value="${(element.backgroundColor || "#FFFFFF").replace("#", "")}"
-                            onchange="tool.updateElementProperty('backgroundColor', '#' + this.value)">
+                            value="${this.getHexFromColor(
+                                element.type === "shape"
+                                    ? element.fill || "#D9D9D9"
+                                    : element.backgroundColor || (element.type === "button" ? this.getButtonDefaultColor(element.buttonType) : "#FFFFFF")
+                            ).replace("#", "")}"
+                            onchange="tool.updateElementProperty('${element.type === "shape" ? "fill" : "backgroundColor"}', '#' + this.value)">
                     </div>
                     <div class="opacity-control">
                         <input type="range" min="0" max="100" 
-                            value="${Math.round((element.opacity || 1) * 100)}"
-                            onchange="tool.updateElementProperty('opacity', this.value / 100)">
-                        <span class="opacity-value">${Math.round((element.opacity || 1) * 100)}%</span>
+                            value="${Math.round((element.fillOpacity !== undefined ? element.fillOpacity : 1) * 100)}"
+                            onchange="tool.updateElementProperty('fillOpacity', this.value / 100)">
+                        <span class="opacity-value">${Math.round((element.fillOpacity !== undefined ? element.fillOpacity : 1) * 100)}%</span>
                     </div>
+                </div>
+            </div>
+            `
+                    : ""
+            }
+            
+            ${
+                showTextControls
+                    ? `
+            <div class="property-section">
+                <div class="property-title">Text</div>
+                <div class="color-control">
+                    <div class="color-input">
+                        <label class="ir">Color</label>
+                        <input type="color" class="color-picker" 
+                            value="${this.getHexFromColor(this.getActualTextColor(element))}"
+                            oninput="tool.updateElementProperty('textColor', this.value)"
+                            onchange="tool.updateElementProperty('textColor', this.value)">
+                        <input type="text" class="color-value" 
+                            value="${this.getHexFromColor(this.getActualTextColor(element)).replace("#", "")}"
+                            onchange="tool.updateElementProperty('textColor', '#' + this.value)">
+                    </div>
+                </div>
+                <div class="coordinate-controls">
+                    <div class="coordinate-input">
+                        <label>Size</label>
+                        <input type="number" value="${element.fontSize || 14}" min="8" max="72"
+                            onchange="tool.updateElementProperty('fontSize', this.value)"
+                            onkeydown="tool.handleNumberInputKeydown(event, 'fontSize', this)">
+                    </div>
+                </div>
+                <div class="style-checkbox">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" class="hidden-checkbox" id="bold-checkbox" 
+                            ${element.fontWeight === "bold" ? "checked" : ""}
+                            onchange="tool.updateElementProperty('fontWeight', this.checked ? 'bold' : 'normal')">
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">Bold</span>
+                    </label>
                 </div>
             </div>
             `
@@ -4455,14 +4697,17 @@ class PrototypingTool {
                     ? `
             <div class="property-section">
                 <div class="property-title">Stroke</div>
+                ${
+                    (element.borderWidth && element.borderWidth > 0) || (element.type === "shape" && (element.shapeType === "line" || element.shapeType === "arrow"))
+                        ? `
                 <div class="color-control">
                     <div class="color-input">
                         <input type="color" class="color-picker" 
-                            value="${element.borderColor || "#D9DBE0"}"
+                            value="${element.borderColor || "#000000"}"
                             oninput="tool.updateElementProperty('borderColor', this.value)"
                             onchange="tool.updateElementProperty('borderColor', this.value)">
                         <input type="text" class="color-value" 
-                            value="${(element.borderColor || "#D9DBE0").replace("#", "")}"
+                            value="${(element.borderColor || "#000000").replace("#", "")}"
                             onchange="tool.updateElementProperty('borderColor', '#' + this.value)">
                     </div>
                     <div class="stroke-controls">
@@ -4476,8 +4721,21 @@ class PrototypingTool {
                             value="${element.borderWidth || 1}" min="0"
                             onchange="tool.updateElementProperty('borderWidth', this.value)"
                             onkeydown="tool.handleNumberInputKeydown(event, 'borderWidth', this)">
+                        <button class="stroke-remove-btn" onclick="tool.removeStroke()" title="Remove Stroke">
+                            <img src="src/images/icon-X.svg" alt="Remove">
+                        </button>
                     </div>
                 </div>
+                `
+                        : `
+                <div class="stroke-add-control">
+                    <button class="stroke-add-btn" onclick="tool.addStroke()">
+                        <img src="src/images/icon-+.svg" alt="Add Stroke">
+                        <span>Add Stroke</span>
+                    </button>
+                </div>
+                `
+                }
             </div>
             `
                     : ""
@@ -4658,8 +4916,36 @@ class PrototypingTool {
 
     applyBorderStyle(element, elementDiv) {
         const borderWidth = element.borderWidth || 1;
-        const borderColor = element.borderColor || "#D9DBE0";
+        const borderColor = element.borderColor || "#000000";
         const position = element.borderPosition || "center";
+
+        // 선과 화살표는 border를 적용하지 않음
+        if (element.type === "shape" && (element.shapeType === "line" || element.shapeType === "arrow")) {
+            elementDiv.style.borderWidth = "0px";
+            elementDiv.style.borderStyle = "none";
+            elementDiv.style.borderColor = "transparent";
+            elementDiv.style.margin = "0";
+            return;
+        }
+
+        // 원형 도형은 메인 요소에 border를 적용하지 않음
+        if (element.type === "shape" && element.shapeType === "circle") {
+            elementDiv.style.borderWidth = "0px";
+            elementDiv.style.borderStyle = "none";
+            elementDiv.style.borderColor = "transparent";
+            elementDiv.style.margin = "0";
+            return;
+        }
+
+        // 버튼은 border가 추가되어도 크기가 변하지 않도록 처리
+        if (element.type === "button") {
+            elementDiv.style.borderWidth = `${borderWidth}px`;
+            elementDiv.style.borderStyle = "solid";
+            elementDiv.style.borderColor = borderColor;
+            elementDiv.style.boxSizing = "border-box";
+            elementDiv.style.margin = "0";
+            return;
+        }
 
         // 테두리 스타일 설정
         elementDiv.style.borderWidth = `${borderWidth}px`;
@@ -4710,7 +4996,7 @@ class PrototypingTool {
             line1.setAttribute("y1", "0");
             line1.setAttribute("x2", "100%");
             line1.setAttribute("y2", "100%");
-            line1.setAttribute("stroke", element.borderColor || "#D9DBE0");
+            line1.setAttribute("stroke", element.borderColor || "#000000");
             line1.setAttribute("stroke-width", "1");
 
             // 두 번째 대각선 (우상단 → 좌하단)
@@ -4719,7 +5005,7 @@ class PrototypingTool {
             line2.setAttribute("y1", "0");
             line2.setAttribute("x2", "0");
             line2.setAttribute("y2", "100%");
-            line2.setAttribute("stroke", element.borderColor || "#D9DBE0");
+            line2.setAttribute("stroke", element.borderColor || "#000000");
             line2.setAttribute("stroke-width", "1");
 
             svg.appendChild(line1);
@@ -4911,6 +5197,14 @@ class PrototypingTool {
                         img.style.height = "100%";
                         img.style.objectFit = "contain";
                         img.style.filter = this.selectedElement.iconColor ? `brightness(0) saturate(100%) ${this.selectedElement.iconColor}` : "";
+
+                        // 화살표와 꺽쇠 아이콘에 대한 방향 적용
+                        if (value === "arrow-down") {
+                            img.style.transform = "rotate(180deg)";
+                        } else if (value === "anglebracket-close") {
+                            img.style.transform = "rotate(180deg)";
+                        }
+
                         wrapper.appendChild(img);
                     }
                 }
@@ -5073,8 +5367,119 @@ class PrototypingTool {
                 if (property === "y") elementDiv.style.top = `${newValue}px`;
                 if (property === "width") elementDiv.style.width = `${newValue}px`;
                 if (property === "height") elementDiv.style.height = `${newValue}px`;
-                if (property === "borderWidth") this.applyBorderStyle(element, elementDiv);
+                if (property === "borderWidth") {
+                    // 선과 화살표의 경우 두께 직접 적용
+                    if (element.type === "shape") {
+                        if (element.shapeType === "line") {
+                            // innerContainer 안의 첫 번째 div (라인 요소)를 찾아서 height 설정
+                            const innerContainer = elementDiv.querySelector("div > div");
+                            if (innerContainer) {
+                                const lineElement = innerContainer.querySelector("div");
+                                if (lineElement) {
+                                    lineElement.style.height = `${newValue}px`;
+                                }
+                            }
+                        } else if (element.shapeType === "arrow") {
+                            // innerContainer 안의 화살표 요소들을 찾아서 두께 설정
+                            const innerContainer = elementDiv.querySelector("div > div");
+                            if (innerContainer) {
+                                const arrowLine = innerContainer.querySelector("div:first-child");
+                                const arrowHead = innerContainer.querySelector("div:last-child");
+                                if (arrowLine) {
+                                    arrowLine.style.height = `${newValue}px`;
+                                }
+                                if (arrowHead) {
+                                    // 화살표 머리 크기도 두께에 비례하여 조정
+                                    const headSize = Math.max(6, newValue * 2);
+                                    arrowHead.style.borderTop = `${headSize}px solid transparent`;
+                                    arrowHead.style.borderBottom = `${headSize}px solid transparent`;
+                                    arrowHead.style.borderLeft = `${headSize * 1.5}px solid ${element.borderColor || "#000000"}`;
+                                }
+                            }
+                        }
+                    }
+                    this.applyBorderStyle(element, elementDiv);
+                }
                 if (property === "fontSize") elementDiv.style.fontSize = `${newValue}px`;
+                if (property === "borderColor") {
+                    // 선과 화살표의 경우 색상 직접 적용
+                    if (element.type === "shape") {
+                        if (element.shapeType === "line") {
+                            // innerContainer 안의 첫 번째 div (라인 요소)를 찾아서 색상 설정
+                            const innerContainer = elementDiv.querySelector("div > div");
+                            if (innerContainer) {
+                                const lineElement = innerContainer.querySelector("div");
+                                if (lineElement) {
+                                    lineElement.style.backgroundColor = newValue;
+                                }
+                            }
+                        } else if (element.shapeType === "arrow") {
+                            // innerContainer 안의 화살표 요소들을 찾아서 색상 설정
+                            const innerContainer = elementDiv.querySelector("div > div");
+                            if (innerContainer) {
+                                const arrowLine = innerContainer.querySelector("div:first-child");
+                                const arrowHead = innerContainer.querySelector("div:last-child");
+                                if (arrowLine) {
+                                    arrowLine.style.backgroundColor = newValue;
+                                }
+                                if (arrowHead) {
+                                    const currentBorderLeft = arrowHead.style.borderLeft;
+                                    const newBorderLeft = currentBorderLeft.replace(/solid #[0-9a-fA-F]{6}/, `solid ${newValue}`);
+                                    arrowHead.style.borderLeft = newBorderLeft;
+                                }
+                            }
+                        } else if (element.shapeType === "circle") {
+                            // 원형인 경우 자식 div의 border 색상 변경
+                            const innerContainer = elementDiv.querySelector("div > div");
+                            if (innerContainer) {
+                                const circleDiv = innerContainer.querySelector("div");
+                                if (circleDiv && element.borderWidth && element.borderWidth > 0) {
+                                    circleDiv.style.border = `${element.borderWidth}px solid ${newValue}`;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (property === "backgroundColor") {
+                    // 배경색 업데이트 - updateElementProperty와 동일한 로직 적용
+                    if (element.type === "table") {
+                        const table = elementDiv.querySelector("table");
+                        if (table) {
+                            const headerCells = table.querySelectorAll("th");
+                            headerCells.forEach((cell) => {
+                                cell.style.backgroundColor = newValue;
+                            });
+                        }
+                    } else if (element.type === "panel") {
+                        const panelContent = elementDiv.querySelector(".panel-content");
+                        if (panelContent) {
+                            panelContent.style.backgroundColor = newValue;
+                        }
+                    } else if (element.type === "shape") {
+                        if (element.shapeType === "circle") {
+                            // 원형인 경우 자식 div의 배경색 변경
+                            const innerContainer = elementDiv.querySelector("div > div");
+                            if (innerContainer) {
+                                const circleDiv = innerContainer.querySelector("div");
+                                if (circleDiv) {
+                                    circleDiv.style.backgroundColor = newValue;
+                                }
+                            }
+                        } else if (element.shapeType === "triangle") {
+                            const svg = elementDiv.querySelector("svg");
+                            if (svg) {
+                                const path = svg.querySelector("path");
+                                if (path) {
+                                    path.setAttribute("fill", newValue);
+                                }
+                            }
+                        } else {
+                            elementDiv.style.backgroundColor = newValue;
+                        }
+                    } else {
+                        elementDiv.style.backgroundColor = newValue;
+                    }
+                }
 
                 // 히스토리 저장
                 this.saveHistory();
@@ -5280,6 +5685,31 @@ class PrototypingTool {
         this.saveHistory();
     }
 
+    addStroke() {
+        if (this.selectedElement) {
+            // stroke가 없는 요소에 stroke를 처음 추가할 때 기본값 설정
+            if (!this.selectedElement.borderWidth || this.selectedElement.borderWidth === 0) {
+                this.updateElementProperty("borderWidth", 1);
+                this.updateElementProperty("borderColor", "#000000");
+                this.updateElementProperty("borderPosition", "center");
+            }
+
+            // 프로퍼티 패널 업데이트
+            this.updateProperties();
+        }
+    }
+
+    removeStroke() {
+        if (this.selectedElement) {
+            // stroke 값 제거
+            this.updateElementProperty("borderWidth", 0);
+            this.updateElementProperty("borderColor", "transparent");
+
+            // 프로퍼티 패널 업데이트
+            this.updateProperties();
+        }
+    }
+
     updateElementProperty(property, value) {
         if (!this.selectedElement) return;
 
@@ -5287,8 +5717,72 @@ class PrototypingTool {
         const elementDiv = document.getElementById(`element-${element.id}`);
 
         switch (property) {
+            case "fillOpacity":
+                element.fillOpacity = parseFloat(value);
+                // DOM만 업데이트, element 속성은 원본 HEX 값 유지
+                if (element.type === "shape") {
+                    const fillWithAlpha = this.setAlphaToColor(element.fill || "#D9D9D9", element.fillOpacity);
+                    if (element.shapeType === "square") {
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            innerContainer.style.backgroundColor = fillWithAlpha;
+                        }
+                    } else if (element.shapeType === "circle") {
+                        const circleDiv = elementDiv.querySelector("div[style*='border-radius: 50%']");
+                        if (circleDiv) {
+                            circleDiv.style.backgroundColor = fillWithAlpha;
+                        }
+                    } else if (element.shapeType === "triangle") {
+                        const svg = elementDiv.querySelector("svg");
+                        if (svg) {
+                            const path = svg.querySelector("path");
+                            if (path) {
+                                path.setAttribute("fill", fillWithAlpha);
+                            }
+                        }
+                    }
+                } else if (element.type === "sticky") {
+                    const stickyColorWithAlpha = this.setAlphaToColor(element.stickyColor || "#fff740", element.fillOpacity);
+                    elementDiv.style.backgroundColor = stickyColorWithAlpha;
+                } else {
+                    const backgroundColorWithAlpha = this.setAlphaToColor(element.backgroundColor || "#FFFFFF", element.fillOpacity);
+                    elementDiv.style.backgroundColor = backgroundColorWithAlpha;
+                }
+                break;
+            case "fill":
+                element.fill = value; // 원본 HEX 값 저장
+                const fillWithAlpha = element.fillOpacity !== undefined ? this.setAlphaToColor(value, element.fillOpacity) : value;
+
+                // 도형인 경우 shapeType에 따라 처리
+                if (element.type === "shape") {
+                    if (element.shapeType === "square") {
+                        // 정사각형인 경우 innerContainer의 배경색 변경
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            innerContainer.style.backgroundColor = fillWithAlpha;
+                        }
+                    } else if (element.shapeType === "circle") {
+                        // 원형인 경우 border-radius: 50%를 가진 자식 div의 배경색 변경
+                        const circleDiv = elementDiv.querySelector("div[style*='border-radius: 50%']");
+                        if (circleDiv) {
+                            circleDiv.style.backgroundColor = fillWithAlpha;
+                        }
+                    } else if (element.shapeType === "triangle") {
+                        // 삼각형인 경우 SVG fill 색상 업데이트
+                        const svg = elementDiv.querySelector("svg");
+                        if (svg) {
+                            const path = svg.querySelector("path");
+                            if (path) {
+                                path.setAttribute("fill", fillWithAlpha);
+                            }
+                        }
+                    }
+                }
+                break;
+
             case "backgroundColor":
-                element.backgroundColor = value;
+                element.backgroundColor = value; // 원본 HEX 값 저장
+                const backgroundColorWithAlpha = element.fillOpacity !== undefined ? this.setAlphaToColor(value, element.fillOpacity) : value;
 
                 // 테이블인 경우 제목 행에만 배경색 적용
                 if (element.type === "table") {
@@ -5296,38 +5790,171 @@ class PrototypingTool {
                     if (table) {
                         const headerCells = table.querySelectorAll("th");
                         headerCells.forEach((cell) => {
-                            cell.style.backgroundColor = value;
+                            cell.style.backgroundColor = backgroundColorWithAlpha;
                         });
                     }
                 } else if (element.type === "panel") {
                     // 패널인 경우 패널 내용 부분에만 배경색 적용
                     const panelContent = elementDiv.querySelector(".panel-content");
                     if (panelContent) {
-                        panelContent.style.backgroundColor = value;
+                        panelContent.style.backgroundColor = backgroundColorWithAlpha;
                     }
-                } else {
-                    elementDiv.style.backgroundColor = value;
-                    // 삼각형인 경우 SVG fill 색상 업데이트
-                    if (element.type === "shape" && element.shapeType === "triangle") {
+                } else if (element.type === "shape") {
+                    // 도형인 경우 shapeType에 따라 처리
+                    if (element.shapeType === "circle") {
+                        // 원형인 경우 border-radius: 50%를 가진 자식 div의 배경색 변경
+                        const circleDiv = elementDiv.querySelector("div[style*='border-radius: 50%']");
+                        if (circleDiv) {
+                            circleDiv.style.backgroundColor = backgroundColorWithAlpha;
+                        }
+                    } else if (element.shapeType === "triangle") {
+                        // 삼각형인 경우 SVG fill 색상 업데이트
                         const svg = elementDiv.querySelector("svg");
                         if (svg) {
                             const path = svg.querySelector("path");
                             if (path) {
-                                path.setAttribute("fill", value);
+                                path.setAttribute("fill", backgroundColorWithAlpha);
+                            }
+                        }
+                    } else if (element.shapeType === "circle") {
+                        // 원형인 경우 자식 div의 배경색 변경
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            const circleDiv = innerContainer.querySelector("div");
+                            if (circleDiv) {
+                                circleDiv.style.backgroundColor = backgroundColorWithAlpha;
+                            }
+                        }
+                    } else {
+                        // 다른 도형들은 기본 처리
+                        elementDiv.style.backgroundColor = backgroundColorWithAlpha;
+                    }
+                } else if (element.type === "button") {
+                    // 버튼인 경우 배경색 적용
+                    elementDiv.style.backgroundColor = backgroundColorWithAlpha;
+                } else {
+                    // 기타 요소들은 기본 처리
+                    elementDiv.style.backgroundColor = backgroundColorWithAlpha;
+                }
+                break;
+
+            case "stickyColor":
+                element.stickyColor = value; // 원본 HEX 값 저장
+                const stickyColorWithAlpha = element.fillOpacity !== undefined ? this.setAlphaToColor(value, element.fillOpacity) : value;
+                elementDiv.style.backgroundColor = stickyColorWithAlpha;
+                break;
+            case "textColor":
+                element.textColor = value;
+                if (element.type === "text") {
+                    elementDiv.style.color = value;
+                } else if (element.type === "button") {
+                    elementDiv.style.color = value;
+                } else if (element.type === "input") {
+                    const input = elementDiv.querySelector("input");
+                    if (input) {
+                        input.style.color = value;
+                    }
+                } else if (element.type === "alert") {
+                    const messageText = elementDiv.querySelector("span");
+                    if (messageText) {
+                        messageText.style.color = value;
+                    }
+                } else if (element.type === "sticky") {
+                    const content = elementDiv.querySelector(".sticky-content");
+                    if (content) {
+                        content.style.color = value;
+                    }
+                }
+                break;
+            case "fontSize":
+                element.fontSize = parseInt(value);
+                if (element.type === "text") {
+                    elementDiv.style.fontSize = `${value}px`;
+                } else if (element.type === "button") {
+                    elementDiv.style.fontSize = `${value}px`;
+                } else if (element.type === "input") {
+                    const input = elementDiv.querySelector("input");
+                    if (input) {
+                        input.style.fontSize = `${value}px`;
+                    }
+                } else if (element.type === "alert") {
+                    const messageText = elementDiv.querySelector("span");
+                    if (messageText) {
+                        messageText.style.fontSize = `${value}px`;
+                    }
+                } else if (element.type === "sticky") {
+                    const content = elementDiv.querySelector(".sticky-content");
+                    if (content) {
+                        content.style.fontSize = `${value}px`;
+                    }
+                }
+                break;
+            case "fontWeight":
+                element.fontWeight = value;
+                if (element.type === "text") {
+                    elementDiv.style.fontWeight = value;
+                } else if (element.type === "button") {
+                    elementDiv.style.fontWeight = value;
+                } else if (element.type === "input") {
+                    const input = elementDiv.querySelector("input");
+                    if (input) {
+                        input.style.fontWeight = value;
+                    }
+                } else if (element.type === "alert") {
+                    const messageText = elementDiv.querySelector("span");
+                    if (messageText) {
+                        messageText.style.fontWeight = value;
+                    }
+                } else if (element.type === "sticky") {
+                    const content = elementDiv.querySelector(".sticky-content");
+                    if (content) {
+                        content.style.fontWeight = value;
+                    }
+                }
+                break;
+            case "borderColor":
+                element.borderColor = value;
+                elementDiv.style.borderColor = value;
+
+                // 선과 화살표의 경우 색상 직접 적용
+                if (element.type === "shape") {
+                    if (element.shapeType === "line") {
+                        // innerContainer 안의 첫 번째 div (라인 요소)를 찾아서 색상 설정
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            const lineElement = innerContainer.querySelector("div");
+                            if (lineElement) {
+                                lineElement.style.backgroundColor = value;
+                            }
+                        }
+                    } else if (element.shapeType === "arrow") {
+                        // innerContainer 안의 화살표 요소들을 찾아서 색상 설정
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            const arrowLine = innerContainer.querySelector("div:first-child");
+                            const arrowHead = innerContainer.querySelector("div:last-child");
+                            if (arrowLine) {
+                                arrowLine.style.backgroundColor = value;
+                            }
+                            if (arrowHead) {
+                                // 현재 borderLeft 값을 가져와서 색상만 변경
+                                const currentBorderLeft = arrowHead.style.borderLeft;
+                                const newBorderLeft = currentBorderLeft.replace(/solid #[0-9a-fA-F]{6}/, `solid ${value}`);
+                                arrowHead.style.borderLeft = newBorderLeft;
+                            }
+                        }
+                    } else if (element.shapeType === "circle") {
+                        // 원형인 경우 fill이 적용되는 내부 div의 border 색상만 변경
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            const circleDiv = innerContainer.querySelector("div");
+                            if (circleDiv && element.borderWidth && element.borderWidth > 0) {
+                                circleDiv.style.border = `${element.borderWidth}px solid ${value}`;
                             }
                         }
                     }
                 }
-                break;
 
-            case "opacity":
-                element.opacity = parseFloat(value);
-                elementDiv.style.opacity = value;
-                break;
-
-            case "borderColor":
-                element.borderColor = value;
-                elementDiv.style.borderColor = value;
                 // X 표시가 있는 경우 X 표시의 색상도 업데이트
                 const svg = elementDiv.querySelector("svg");
                 if (svg) {
@@ -5345,8 +5972,10 @@ class PrototypingTool {
                         }
                     }
                 }
-                // border 스타일 다시 적용
-                this.applyBorderStyle(element, elementDiv);
+                // 원형 요소는 applyBorderStyle을 호출하지 않음 (이미 처리됨)
+                if (!(element.type === "shape" && element.shapeType === "circle")) {
+                    this.applyBorderStyle(element, elementDiv);
+                }
                 break;
 
             case "borderPosition":
@@ -5356,7 +5985,55 @@ class PrototypingTool {
 
             case "borderWidth":
                 element.borderWidth = parseInt(value);
-                this.applyBorderStyle(element, elementDiv);
+
+                // 선과 화살표의 경우 두께 직접 적용
+                if (element.type === "shape") {
+                    if (element.shapeType === "line") {
+                        // innerContainer 안의 첫 번째 div (라인 요소)를 찾아서 height 설정
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            const lineElement = innerContainer.querySelector("div");
+                            if (lineElement) {
+                                lineElement.style.height = `${value}px`;
+                            }
+                        }
+                    } else if (element.shapeType === "arrow") {
+                        // innerContainer 안의 화살표 요소들을 찾아서 두께 설정
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            const arrowLine = innerContainer.querySelector("div:first-child");
+                            const arrowHead = innerContainer.querySelector("div:last-child");
+                            if (arrowLine) {
+                                arrowLine.style.height = `${value}px`;
+                            }
+                            if (arrowHead) {
+                                // 화살표 머리 크기도 두께에 비례하여 조정
+                                const headSize = Math.max(6, value * 2);
+                                arrowHead.style.borderTop = `${headSize}px solid transparent`;
+                                arrowHead.style.borderBottom = `${headSize}px solid transparent`;
+                                arrowHead.style.borderLeft = `${headSize * 1.5}px solid ${element.borderColor || "#000000"}`;
+                            }
+                        }
+                    } else if (element.shapeType === "circle") {
+                        // 원형인 경우 fill이 적용되는 내부 div의 border 두께만 변경
+                        const innerContainer = elementDiv.querySelector("div > div");
+                        if (innerContainer) {
+                            const circleDiv = innerContainer.querySelector("div");
+                            if (circleDiv) {
+                                if (value > 0) {
+                                    circleDiv.style.border = `${value}px solid ${element.borderColor || "#000000"}`;
+                                } else {
+                                    circleDiv.style.border = "none";
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 원형 요소는 applyBorderStyle을 호출하지 않음 (이미 처리됨)
+                if (!(element.type === "shape" && element.shapeType === "circle")) {
+                    this.applyBorderStyle(element, elementDiv);
+                }
                 // 삼각형인 경우 SVG stroke-width 업데이트
                 if (element.type === "shape" && element.shapeType === "triangle") {
                     const svg = elementDiv.querySelector("svg");
@@ -5367,7 +6044,7 @@ class PrototypingTool {
                                 path.setAttribute("stroke", "none");
                                 path.setAttribute("stroke-width", "0");
                             } else {
-                                path.setAttribute("stroke", element.borderColor || "#d9dbe0");
+                                path.setAttribute("stroke", element.borderColor || "#000000");
                                 path.setAttribute("stroke-width", value);
                             }
                         }
@@ -5450,6 +6127,23 @@ class PrototypingTool {
         if (!this.selectedElement || this.selectedElement.type !== "text") return;
         const currentSize = this.selectedElement.fontSize || 16;
         this.updateFontSize(currentSize - 2);
+    }
+
+    copyContentToClipboard(content) {
+        if (!content || content.trim() === "") {
+            this.showNotification("Copy Failed", "No content to copy", "error");
+            return;
+        }
+
+        navigator.clipboard
+            .writeText(content)
+            .then(() => {
+                this.showNotification("Copied!", "Content copied to clipboard", "success");
+            })
+            .catch((err) => {
+                console.error("Failed to copy content: ", err);
+                this.showNotification("Copy Failed", "Failed to copy content", "error");
+            });
     }
 
     // Layer 관련 함수들 수정
@@ -6293,6 +6987,150 @@ class PrototypingTool {
         this.selectedElement = null;
         this.updateProperties();
         this.updateLayersList();
+    }
+
+    // 색상에 alpha 적용 (hex/rgb/rba 모두 지원)
+    setAlphaToColor(color, alpha) {
+        if (!color) return "";
+        if (color.startsWith("rgba")) {
+            return color.replace(/rgba?\(([^)]+)\)/, (match, contents) => {
+                const parts = contents.split(",").map((s) => s.trim());
+                return `rgba(${parts[0]},${parts[1]},${parts[2]},${alpha !== undefined ? alpha : parts[3] !== undefined ? parts[3] : 1})`;
+            });
+        } else if (color.startsWith("rgb")) {
+            return color.replace(/rgb\(([^)]+)\)/, (match, contents) => {
+                return `rgba(${contents},${alpha !== undefined ? alpha : 1})`;
+            });
+        } else if (color.startsWith("#")) {
+            const rgba = this.hexToRgba(color, alpha !== undefined ? alpha : 1);
+            return rgba;
+        }
+        return color;
+    }
+
+    // hex -> rgba 변환
+    hexToRgba(hex, alpha = 1) {
+        let c = hex.replace("#", "");
+        if (c.length === 3)
+            c = c
+                .split("")
+                .map((x) => x + x)
+                .join("");
+        const num = parseInt(c, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    // rgba/rgb -> hex 변환
+    getHexFromColor(color) {
+        if (!color) return "#FFFFFF";
+        if (color.startsWith("#")) return color;
+
+        // rgba 또는 rgb에서 hex 추출
+        const rgbaMatch = color.match(/rgba?\(([^)]+)\)/);
+        if (rgbaMatch) {
+            const parts = rgbaMatch[1].split(",").map((s) => s.trim());
+            const r = parseInt(parts[0]);
+            const g = parseInt(parts[1]);
+            const b = parseInt(parts[2]);
+            return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+        }
+
+        return "#FFFFFF";
+    }
+
+    // 버튼 타입에 따른 기본 색상 반환
+    getButtonDefaultColor(buttonType) {
+        switch (buttonType) {
+            case "activate":
+                return "#2E6FF2";
+            case "normal":
+                return "#ffffff";
+            case "hover":
+            case "deactivate":
+                return "#D9DBE0";
+            default:
+                return "#2E6FF2";
+        }
+    }
+
+    getCurrentTextColor(element) {
+        // 요소 타입별로 현재 텍스트 색상을 반환
+        switch (element.type) {
+            case "text":
+                return element.textColor || "#000000";
+            case "button":
+                // 버튼의 경우 buttonType에 따라 기본 색상 결정
+                if (element.textColor) {
+                    return element.textColor;
+                }
+                switch (element.buttonType) {
+                    case "normal":
+                        return "#000000";
+                    case "activate":
+                    case "deactivate":
+                        return "#ffffff";
+                    case "hover":
+                        return "#121314";
+                    default:
+                        return "#ffffff";
+                }
+            case "input":
+                return element.textColor || "#000000";
+            case "alert":
+                return element.textColor || "#121314";
+            case "sticky":
+                return element.textColor || "#000000";
+            default:
+                return "#000000";
+        }
+    }
+
+    // 실제 DOM에서 현재 텍스트 색상을 가져오는 함수
+    getActualTextColor(element) {
+        const elementDiv = document.getElementById(`element-${element.id}`);
+        if (!elementDiv) {
+            return this.getCurrentTextColor(element);
+        }
+
+        let computedColor;
+        switch (element.type) {
+            case "text":
+                computedColor = window.getComputedStyle(elementDiv).color;
+                break;
+            case "button":
+                computedColor = window.getComputedStyle(elementDiv).color;
+                break;
+            case "input":
+                const input = elementDiv.querySelector("input");
+                computedColor = input ? window.getComputedStyle(input).color : "#000000";
+                break;
+            case "alert":
+                const messageText = elementDiv.querySelector("span");
+                computedColor = messageText ? window.getComputedStyle(messageText).color : "#121314";
+                break;
+            case "sticky":
+                const content = elementDiv.querySelector(".sticky-content");
+                computedColor = content ? window.getComputedStyle(content).color : "#000000";
+                break;
+            default:
+                computedColor = "#000000";
+        }
+
+        // RGB 값을 HEX로 변환
+        if (computedColor.startsWith("rgb")) {
+            const rgb = computedColor.match(/\d+/g);
+            if (rgb && rgb.length >= 3) {
+                const r = parseInt(rgb[0]);
+                const g = parseInt(rgb[1]);
+                const b = parseInt(rgb[2]);
+                return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+            }
+        }
+
+        return computedColor;
     }
 }
 

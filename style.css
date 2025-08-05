@@ -227,6 +227,7 @@ button {
 
 .save-option {
     padding: 10px 20px;
+    width: 100%;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
@@ -770,11 +771,11 @@ button {
     position: absolute;
     top: 0;
     left: 0;
+    right: 320px;
     width: 100%;
     height: 100%;
     transform-origin: 0 0;
     z-index: 1;
-    cursor: default;
 }
 
 .canvas.panning {
@@ -788,7 +789,7 @@ button {
 /* 캔버스 컨트롤 패널 */
 .canvas-controls {
     position: absolute;
-    bottom: 20px;
+    bottom: 70px;
     left: 20px;
     display: flex;
     gap: 8px;
@@ -870,10 +871,30 @@ button {
 }
 
 .property-title {
+    position: relative;
     font-size: 14px;
     font-weight: 600;
-    margin-bottom: 12px;
+    padding-bottom: 12px;
     color: #121314;
+}
+
+/* 우측 패널 텍스트 말줄임표 처리 */
+.sidebar-right .property-section,
+.sidebar-right .coordinate-input,
+.sidebar-right .color-value,
+.sidebar-right .opacity-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-right .property-section *,
+.sidebar-right .coordinate-input *,
+.sidebar-right .color-value,
+.sidebar-right .opacity-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Type 스타일 */
@@ -913,6 +934,30 @@ button {
     background: transparent;
     width: 100%;
     font-size: 14px;
+}
+
+.coordinate-input span {
+    flex-grow: 1;
+    font-size: 14px;
+    color: #47494d;
+}
+
+.copy-content-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #e8eaf0;
+    border: none;
+    border-radius: 4px;
+    padding: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.copy-content-btn:hover {
+    opacity: 1;
+    background: #d9dbe0;
 }
 
 /* 정렬 버튼 그리드 */
@@ -1014,6 +1059,61 @@ button {
     margin-top: 8px;
 }
 
+.stroke-add-control {
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.stroke-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    color: #495057;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.stroke-add-btn:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.stroke-add-btn img {
+    width: 12px;
+    height: 12px;
+    opacity: 0.7;
+}
+
+.stroke-remove-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.stroke-remove-btn:hover {
+    background: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.stroke-remove-btn img {
+    width: 10px;
+    height: 10px;
+    opacity: 0.6;
+}
+
 .stroke-select,
 .stroke-width {
     flex: 1;
@@ -1024,26 +1124,52 @@ button {
     color: #47494d;
 }
 
-/* Show X mark 체크박스 스타일 */
+/* 커스텀 체크박스 스타일 */
 .style-checkbox {
     display: flex;
     align-items: center;
-    gap: 8px;
     margin-top: 12px;
 }
 
-.style-checkbox input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    border: 2px solid #d9dbe0;
-    appearance: none;
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
+    user-select: none;
 }
 
-.style-checkbox input[type="checkbox"]:checked {
-    background-color: #2e6ff2;
+.hidden-checkbox {
+    display: none;
+}
+
+.checkmark::before {
+    content: "";
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #d9dbe0;
+    border-radius: 4px;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+
+.hidden-checkbox:checked + .checkmark::before {
+    content: "✓";
+    background: #2e6ff2;
     border-color: #2e6ff2;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 18px;
+    vertical-align: middle;
+}
+
+.checkbox-label {
+    color: #47494d;
+    font-size: 14px;
 }
 
 /* 요소 스타일 */
@@ -1054,11 +1180,6 @@ button {
     user-select: none;
     min-width: 50px;
     min-height: 30px;
-}
-
-/* 삼각형 요소는 배경 투명 */
-.element.triangle {
-    background: transparent;
 }
 
 .element.selected,
@@ -1120,7 +1241,7 @@ button {
 
 /* 버튼 요소 */
 .element.button {
-    padding: 10px 20px;
+    padding: 10px 20px !important;
     border-radius: 10px;
     text-align: center;
     font-size: 14px;
@@ -1130,31 +1251,32 @@ button {
     justify-content: center;
     align-items: center;
     min-width: 52px;
-    width: fit-content;
-    height: fit-content;
+    width: auto !important;
+    height: auto !important;
     box-sizing: border-box;
+    border: 1px solid transparent;
 }
 
 .element.button.activate {
     background: #2e6ff2;
     color: #fff;
-    border: none;
+    border: 1px solid transparent;
 }
 
 .element.button.normal {
-    border: none;
+    border: 1px solid transparent;
     background: #fff;
     color: #121314;
 }
 
 .element.button.hover {
-    border: none;
+    border: 1px solid transparent;
     background: #dee8ff;
     color: #121314;
 }
 
 .element.button.deactivate {
-    border: none;
+    border: 1px solid transparent;
     background: #d9dbe0;
     color: #8d9299;
 }
@@ -1183,6 +1305,11 @@ button {
     background: transparent;
 }
 
+.element.shape.triangle {
+    background: transparent;
+    border: none !important;
+}
+
 .element.shape.circle > div {
     border-radius: 50%;
     overflow: hidden;
@@ -1205,6 +1332,7 @@ button {
 
 .element.input {
     background: transparent;
+    height: auto !important;
 }
 
 .input-container input {
