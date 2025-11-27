@@ -130,9 +130,6 @@ class PrototypingTool {
         this.loremText =
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
 
-        // 첫 페이지 생성
-        this.createPage("Home");
-
         this.initializeEvents();
         this.saveHistory();
 
@@ -248,11 +245,15 @@ class PrototypingTool {
             } else {
                 // If no saved data exists, create the initial page
                 this.createPage("Home");
+                // 초기 데스크톱 프레임 생성
+                this.setCanvasSize("desktop");
             }
         } catch (error) {
             console.error("Error loading from localStorage:", error);
             // If there's an error, create a new initial page
             this.createPage("Home");
+            // 초기 데스크톱 프레임 생성
+            this.setCanvasSize("desktop");
         }
     }
 
@@ -1969,7 +1970,7 @@ class PrototypingTool {
         // 적절한 스케일 계산
         const scaleX = canvasWidth / contentWidth;
         const scaleY = canvasHeight / contentHeight;
-        const newScale = Math.min(scaleX, scaleY, 1); // 최대 100% 줌
+        const newScale = Math.min(scaleX, scaleY) * 0.85; // 캔버스에 맞춘 후 85% 비율로 여백 확보
 
         // 중앙 정렬을 위한 오프셋 계산
         const newOffsetX = (canvasWidth - contentWidth * newScale) / 2 - minX * newScale;
@@ -1999,8 +2000,7 @@ class PrototypingTool {
             this.canvasOffset.x = startOffsetX + (targetOffsetX - startOffsetX) * easeOutCubic;
             this.canvasOffset.y = startOffsetY + (targetOffsetY - startOffsetY) * easeOutCubic;
 
-            // transform 속성 적용하지 않음
-            // this.updateCanvasTransform();
+            this.updateCanvasTransform();
             this.updateZoomValue();
 
             if (progress < 1) {
@@ -2303,7 +2303,7 @@ class PrototypingTool {
         // 적절한 스케일 계산
         const scaleX = canvasWidth / contentWidth;
         const scaleY = canvasHeight / contentHeight;
-        const newScale = Math.min(scaleX, scaleY, 1); // 최대 100% 줌
+        const newScale = Math.min(scaleX, scaleY) * 0.85; // 캔버스에 맞춘 후 85% 비율로 여백 확보
 
         // 중앙 정렬을 위한 오프셋 계산
         const newOffsetX = (canvasWidth - contentWidth * newScale) / 2 - minX * newScale;
